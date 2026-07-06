@@ -1,0 +1,396 @@
+{
+  "database": "dont_starve_seasonal_survival",
+  "layer": "winter_capability_rules",
+  "last_updated": "2026-07-05",
+  "design_principle": "冬季/首冬规则层优先判断三条因果链是否成立：保暖链、食物链、光源链。血量/饥饿/理智是 UI 上的实时结果，不是提前规划的根因输入；四季总入口见 data/seasonal_survival.json。",
+  "framework_decision": {
+    "old_framework": "保暖能力、食物续航、光源掌控、基地稳定四维并列。",
+    "new_framework": "保暖链 × 食物链 × 光源链同时成立；基地、战斗和探索距离作为三条链的上下文放大因子。",
+    "chosen": "new_framework",
+    "why": [
+      "它更接近首冬死亡因果：链断裂先发生，三维归零和血量扣减是后果。",
+      "它更适合 Agent 提问：问链的完整性比问实时三维数值更能提前判断风险。",
+      "它能解释连锁死亡：食物不足会拖累理智，光源不足会诱发暗影，保暖不足最终转化为血量损失。"
+    ]
+  },
+  "input_schema": {
+    "required_if_known": [
+      "game_mode",
+      "current_day",
+      "current_season",
+      "has_science_machine",
+      "has_alchemy_engine",
+      "has_fire_pit",
+      "has_thermal_stone",
+      "warm_clothing",
+      "portable_heat_plan",
+      "fuel_plan",
+      "food_sources",
+      "stored_food_days",
+      "light_sources",
+      "night_plan",
+      "base_location_notes",
+      "combat_gear",
+      "morgue_ocr_fields"
+    ],
+    "allow_unknown": true,
+    "do_not_prioritize_as_inputs": [
+      "current_health",
+      "current_hunger",
+      "current_sanity"
+    ],
+    "unknown_policy": "如果用户没有提供信息，先用阶段卡片和最多 1-3 个补问获取链状态；仍未知时按新手保守默认判断。三维数值只用于应急程度，不作为首冬规划主判断。"
+  },
+  "capability_dimensions": [
+    {
+      "id": "warmth_chain",
+      "name_zh": "保暖链",
+      "causal_path": "保暖链断 -> 体温低于冻结阈值 -> 血量持续扣减 -> 冻死",
+      "chain_components": ["御寒装备", "固定火源", "便携热源/暖石", "应急燃料和火把材料"],
+      "pass_conditions_any": [
+        "has_thermal_stone == true AND has_fire_pit == true AND mobile_fire_materials == true",
+        "has_thermal_stone == true AND heat_source_available == true AND warm_clothing includes winter_hat",
+        "has_thermal_stone == true AND heat_source_available == true AND warm_clothing includes beefalo_hat",
+        "current_day < 15 AND has_alchemy_engine == true AND can_craft_thermal_stone == true AND heat_source_available == true"
+      ],
+      "partial_conditions_any": [
+        "warm_clothing includes rabbit_earmuffs",
+        "has_fire_pit == true AND mobile_fire_materials == true",
+        "current_day < 15 AND has_science_machine == true"
+      ],
+      "fail_signals": [
+        "current_day >= 21 AND has_thermal_stone != true",
+        "current_day >= 18 AND has_alchemy_engine != true AND has_thermal_stone != true",
+        "has_fire_pit != true AND current_day >= 15"
+      ],
+      "risk_message": "最大冻死风险来自“基地能烤火，但出门没有便携保暖和回温计划”。"
+    },
+    {
+      "id": "food_chain",
+      "name_zh": "食物链",
+      "causal_path": "食物链断 -> 饥饿值归零 -> 血量持续扣减；同时采集压力上升，进一步拖累保暖链和光源链",
+      "chain_components": ["稳定食物来源", "烹饪/转化能力", "存粮或保鲜", "冬季可持续补给路线"],
+      "pass_conditions_any": [
+        "has_crock_pot == true AND food_sources includes rabbit_traps",
+        "has_crock_pot == true AND food_sources includes spider_meat_or_monster_meat AND filler_food_available == true",
+        "has_drying_racks == true AND stored_jerky_or_meat_on_racks >= 4",
+        "stored_meals_days >= 5 AND stable_food_source == true"
+      ],
+      "partial_conditions_any": [
+        "has_traps >= 4",
+        "stored_raw_food_days >= 3",
+        "has_crock_pot == true",
+        "located_rabbit_holes == true"
+      ],
+      "fail_signals": [
+        "current_day >= 18 AND has_crock_pot != true AND stable_food_source != true",
+        "current_day >= 21 AND stored_food_days < 2 AND stable_food_source != true",
+        "food_plan relies_on winter_farms_or_ponds"
+      ],
+      "risk_message": "断粮风险通常不是完全没吃的，而是秋天靠地面浆果/胡萝卜，冬天再生变慢后突然续不上。"
+    },
+    {
+      "id": "light_chain",
+      "name_zh": "光源链",
+      "causal_path": "光源链断 -> 长夜/黑暗导致理智持续下降或被 Charlie 攻击 -> 暗影生物出现 -> 血量被打",
+      "chain_components": ["固定夜间光源", "移动光源", "备用燃料", "夜间行动边界"],
+      "pass_conditions_any": [
+        "has_fire_pit == true AND spare_torches >= 2",
+        "has_fire_pit == true AND can_craft_torches_now == true",
+        "has_fire_pit == true AND mobile_fire_materials == true"
+      ],
+      "partial_conditions_any": [
+        "spare_torches >= 1",
+        "can_craft_torches_now == true",
+        "logs_count >= 10 AND cutgrass_count >= 6 AND twigs_count >= 4"
+      ],
+      "fail_signals": [
+        "current_day >= 21 AND spare_torches == 0 AND can_craft_torches_now != true",
+        "current_day >= 15 AND has_fire_pit != true",
+        "night_travel_plan == true AND spare_torches < 2"
+      ],
+      "risk_message": "冬季长夜把光源问题放大；没有备用火把/材料时，回不去基地就会被黑暗和降温同时惩罚。"
+    }
+  ],
+  "context_modifiers": [
+    {
+      "id": "base",
+      "name_zh": "基地与路线稳定性",
+      "role": "上下文放大因子，不是独立死亡根因。好基地会让三条链更容易闭合，坏基地会让任一链更容易断。",
+      "positive_signals": [
+        "has_fire_pit == true AND has_science_machine == true AND base_near_rabbit_or_beefalo == true AND base_not_too_close_to_shore == true",
+        "has_fire_pit == true AND has_crock_pot == true AND resource_routes_known == true"
+      ],
+      "negative_signals": [
+        "base_in_dense_forest == true AND fire_safety_unknown == true",
+        "base_on_shore == true AND pengull_path_risk == true",
+        "current_day >= 20 AND no_known_food_route == true",
+        "user_plans_to_wait_deerclops_in_main_base == true"
+      ],
+      "affects_chains": ["warmth_chain", "food_chain", "light_chain"]
+    },
+    {
+      "id": "combat_and_accidents",
+      "name_zh": "战斗与意外",
+      "role": "通常不是首冬根因链，而是准备不足后的放大器；猎犬、暗影、鹿角怪会把链断裂快速转化成死亡。",
+      "negative_signals": [
+        "combat_gear missing AND current_day >= 15",
+        "hound_wave_warning == true AND no_armor_or_external_mob_plan == true",
+        "deerclops_warning == true AND player_in_main_base == true",
+        "exploration_far_from_base == true AND warmth_chain not_pass"
+      ],
+      "affects_chains": ["warmth_chain", "light_chain"]
+    }
+  ],
+  "chain_interaction_rules": [
+    {
+      "id": "food_to_sanity_and_exposure",
+      "if": "food_chain weak_or_broken",
+      "then": [
+        "玩家会被迫更频繁出门找食物，增加保暖链断裂概率。",
+        "低饥饿和低存粮会压缩夜间整理/恢复时间，增加光源链断裂概率。",
+        "如果同时没有肉干/小肉干，冬季长夜的理智恢复也会不足。"
+      ],
+      "agent_inference": "停尸房显示暗影生物或猎犬死亡时，也要回查食物链；玩家可能不是战斗差，而是食物压力导致低理智或冒险采集。"
+    },
+    {
+      "id": "warmth_to_exploration_failure",
+      "if": "warmth_chain weak_or_broken",
+      "then": [
+        "玩家活动半径被火源限制，食物链补给能力下降。",
+        "出门采集时会在回基地前冻伤，常被误判为单纯血量不足。"
+      ],
+      "agent_inference": "停尸房显示 Freezing 时，优先问暖石、固定火源、便携火源和燃料，而不是问当前血量。"
+    },
+    {
+      "id": "light_to_sanity_and_darkness",
+      "if": "light_chain weak_or_broken",
+      "then": [
+        "冬季长夜会扩大火把/燃料不足问题。",
+        "完全黑暗会被 Charlie 攻击；长期低光照和夜间压力会让理智下降，暗影生物变成实际威胁。"
+      ],
+      "agent_inference": "停尸房显示 Darkness/Charlie 时，优先判断移动光源和夜间计划；显示 Terrorbeak/Crawling Horror 时，优先判断光源链和理智恢复食物。"
+    }
+  ],
+  "stage_classifier": [
+    {
+      "id": "early_learning",
+      "label": "刚开局，还在摸索",
+      "day_range": "1-5",
+      "primary_risks": ["darkness", "hunger", "no_science_machine"],
+      "agent_focus": "先让玩家活到科技成型，不要过早讲复杂 Boss 和高级食谱。"
+    },
+    {
+      "id": "autumn_buildout",
+      "label": "秋季建设窗口",
+      "day_range": "6-14",
+      "primary_risks": ["delayed_tech", "no_base_route", "no_food_system"],
+      "agent_focus": "建立火坑、锅、陷阱/食物路线、基础战斗装备，并开始准备二本。"
+    },
+    {
+      "id": "prewinter_prepare",
+      "label": "快到冬天了，正在准备",
+      "day_range": "15-20",
+      "primary_risks": ["no_thermal_stone", "no_warm_clothing", "no_stored_food", "no_fuel"],
+      "agent_focus": "压缩任务，只保首冬必需能力：暖石、火源、食物、光源、护甲。"
+    },
+    {
+      "id": "winter_survival",
+      "label": "已经入冬，临时补救",
+      "day_range": "21-36",
+      "primary_risks": ["freezing", "food_gap", "hound_wave", "deerclops", "long_night"],
+      "agent_focus": "不要再追求完美基地；先让玩家建立暖石循环、兔子/肉丸续航、远离主基地处理威胁。"
+    },
+    {
+      "id": "repeated_winter_deaths",
+      "label": "已经过了几个秋天但冬天还是死",
+      "day_range": "any",
+      "primary_risks": ["misprioritized_preparation", "overexploration", "no_survival_loop"],
+      "agent_focus": "诊断死亡模式：冻死、断粮、猎犬、鹿角怪、低理智；用最小闭环重排前 20 天。"
+    }
+  ],
+  "priority_ladder": [
+    {
+      "rank": 1,
+      "name": "立刻防冻",
+      "trigger": "current_day >= 18 OR current_season == winter",
+      "do_first": ["做或补暖石", "有火坑并带木头", "准备营火/火把材料", "临时兔耳罩也可接受"],
+      "do_not_prioritize": ["农场", "高级建筑", "主动打鹿角怪"]
+    },
+    {
+      "rank": 2,
+      "name": "建立食物闭环",
+      "trigger": "has_food_system != true",
+      "do_first": ["锅", "陷阱抓兔子", "肉丸", "有时间做晾肉架"],
+      "do_not_prioritize": ["冬季钓鱼", "冬季蜂蜜新增产出", "靠浆果自然刷新"]
+    },
+    {
+      "rank": 3,
+      "name": "保证光源和燃料",
+      "trigger": "spare_torches < 2 OR logs_count low OR cutgrass/twigs low",
+      "do_first": ["木头", "草", "树枝", "2-3 根火把或现做材料"],
+      "do_not_prioritize": ["夜间远行", "没有暖石时长距离探索"]
+    },
+    {
+      "rank": 4,
+      "name": "准备猎犬/鹿角怪缓冲",
+      "trigger": "current_day >= 15",
+      "do_first": ["长矛", "木甲", "足球头盔可选", "知道牛群/蜘蛛/企鹅或开阔战斗点"],
+      "do_not_prioritize": ["在主基地等鹿角怪", "无甲打猎犬"]
+    }
+  ],
+  "day_by_day_heuristics": [
+    {
+      "days": "1-5",
+      "goals": [
+        "采集草、树枝、燧石、浆果/胡萝卜",
+        "找金矿并建科学机器",
+        "探索草原/牛群/兔子洞/石矿区",
+        "每晚确保火把或营火"
+      ],
+      "minimum_output": "科学机器或至少已定位金矿；知道一个可靠食物区。"
+    },
+    {
+      "days": "6-10",
+      "goals": [
+        "确定主基地或临时基地并建火坑",
+        "砍树烧树拿木炭，做锅",
+        "做长矛和木甲",
+        "开始放陷阱抓兔子或建立怪物肉+填充物肉丸路线"
+      ],
+      "minimum_output": "火坑、锅、长矛、木甲、稳定食物路线雏形。"
+    },
+    {
+      "days": "11-15",
+      "goals": [
+        "做炼金引擎",
+        "做暖石",
+        "准备冬帽或兔耳罩",
+        "补木头、草、树枝、石头、燧石",
+        "有余力做晾肉架"
+      ],
+      "minimum_output": "暖石路径已确定；至少有一套能入冬的保暖/火源方案。"
+    },
+    {
+      "days": "16-20",
+      "goals": [
+        "停止扩张，补齐短板",
+        "没有暖石则优先做暖石",
+        "没有锅则至少做陷阱和存小肉",
+        "没有衣服则先兔耳罩",
+        "准备 2-3 晚燃料和火把材料"
+      ],
+      "minimum_output": "暖石 + 火坑 + 备用火源材料 + 食物闭环 + 基础护甲。"
+    },
+    {
+      "days": "21-36",
+      "goals": [
+        "出门前加热暖石",
+        "围绕火坑/临时火点短距离采集",
+        "用陷阱、肉丸和肉干续航",
+        "猎犬来时穿甲并引到外部生物或开阔地",
+        "听到鹿角怪提示后离开主基地处理"
+      ],
+      "minimum_output": "每天能活着补温、补食物、补燃料，不追求新系统。"
+    }
+  ],
+  "risk_messages": {
+    "freezing_no_thermal_stone": {
+      "condition": "current_day >= 21 AND has_thermal_stone != true",
+      "severity": "critical",
+      "message": "你现在最大风险是冻死：入冬后没有暖石，离开火源的活动半径会很短。先做暖石或用控制台补暖石，再谈食物优化。"
+    },
+    "prewinter_no_alchemy": {
+      "condition": "current_day >= 15 AND has_alchemy_engine != true",
+      "severity": "high",
+      "message": "你已经进入首冬准备窗口，但还没有二本，暖石、冬帽、冰箱等关键物品会被卡住。优先补二本或走兔耳罩+火源的临时方案。"
+    },
+    "no_food_system": {
+      "condition": "current_day >= 18 AND has_crock_pot != true AND stable_food_source != true",
+      "severity": "high",
+      "message": "你最大风险是冬天断粮：植物再生会变慢，池塘会冻住。先做锅或陷阱，建立兔子/肉丸路线。"
+    },
+    "no_light": {
+      "condition": "current_day >= 21 AND spare_torches == 0 AND can_craft_torches_now != true",
+      "severity": "high",
+      "message": "你没有移动光源冗余，冬天长夜会把一次迷路变成死亡。先补火把或草树枝。"
+    },
+    "base_deerclops": {
+      "condition": "current_day >= 27 AND user_stays_in_main_base_full_time == true",
+      "severity": "medium",
+      "message": "鹿角怪可能毁掉基地。听到巨兽提示时，不要在主基地硬等；带暖石和火源材料去外面处理。"
+    }
+  },
+  "question_policy": {
+    "max_questions": 3,
+    "ask_only_when_needed": true,
+    "questions": [
+      {
+        "id": "current_day",
+        "text": "你现在第几天？",
+        "ask_when": "current_day unknown",
+        "why": "决定是准备期、补救期还是冬季应急。"
+      },
+      {
+        "id": "warmth_status",
+        "text": "你现在有暖石、火坑、冬帽/兔耳罩吗？",
+        "ask_when": "current_day >= 15 OR user says winter coming/deaths in winter",
+        "why": "首冬最大死亡源通常是冻死。"
+      },
+      {
+        "id": "food_status",
+        "text": "你有锅、陷阱、兔子洞/牛群/蜘蛛巢、存粮吗？",
+        "ask_when": "food capability unknown AND current_day >= 10",
+        "why": "冬季食物再生变慢，食物闭环要提前建。"
+      },
+      {
+        "id": "intervention_level",
+        "text": "你想要纯攻略、补物资代码，还是直接调属性？",
+        "ask_when": "not already answered by card two",
+        "why": "决定是否展示控制台援助。"
+      }
+    ]
+  },
+  "minimum_survival_plan_templates": [
+    {
+      "id": "guide_only_day_15_to_20",
+      "applies_when": "intervention_level == guide_only AND current_day between 15 and 20",
+      "steps": [
+        "先做或补二本；如果二本已经有，直接做暖石。",
+        "做兔耳罩作为临时保暖；有牛毛和丝则做冬帽。",
+        "做 4-8 个陷阱放兔子洞上，兔子肉用锅做肉丸或挂小肉干。",
+        "砍够木头，带草和树枝，保证能随时做火把/营火。",
+        "准备长矛和木甲；猎犬来时穿甲，不在密集基地里打。"
+      ]
+    },
+    {
+      "id": "guide_only_winter_emergency",
+      "applies_when": "intervention_level == guide_only AND current_day >= 21",
+      "steps": [
+        "先回火坑或做营火加温，不要远行。",
+        "没有暖石时，立刻补材料做暖石；做不到则缩小活动半径，只在火源附近采集。",
+        "用兔子洞陷阱和肉丸解决饥饿，别指望冬季植物刷新。",
+        "听到猎犬提示就穿甲、远离主基地、引到牛群/蜘蛛/企鹅等外部生物。",
+        "听到鹿角怪提示时，带暖石和燃料离开主基地，优先保建筑。"
+      ]
+    },
+    {
+      "id": "item_code_rescue",
+      "applies_when": "intervention_level == item_codes",
+      "steps": [
+        "先给暖石、冬帽或兔耳罩、木头、草、树枝，解决冻死和黑夜。",
+        "再给锅/陷阱/食物材料，恢复食物闭环。",
+        "最后给长矛和护甲，避免猎犬和意外战斗滚雪球。"
+      ]
+    },
+    {
+      "id": "stat_code_rescue",
+      "applies_when": "intervention_level == stat_codes",
+      "steps": [
+        "先把健康、饥饿、理智拉满。",
+        "如果用户明确要开挂躺平，再给暂停饥饿或 god mode。",
+        "仍建议保留暖石和光源代码，否则体验会变成纯无敌而不是首冬规划。"
+      ]
+    }
+  ]
+}
