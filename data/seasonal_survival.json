@@ -1,0 +1,288 @@
+{
+  "database": "dont_starve_seasonal_survival",
+  "layer": "one_year_seasonal_survival_rules",
+  "language": "zh-CN",
+  "status": "draft_for_mentor_review",
+  "last_updated": "2026-07-05",
+  "scope_decision": {
+    "chosen_scope": "从“首冬生存规划”扩展为“默认世界一年四季生存规划”。",
+    "primary_target": "Don't Starve 单机 Reign of Giants / Giant Edition 默认世界；兼容裸 Don't Starve 两季制和 DST 基础季节差异。",
+    "excluded": [
+      "年节/活动版特殊内容",
+      "Shipwrecked/Hamlet 作为主线",
+      "洞穴/远古深度攻略",
+      "全角色专属打法",
+      "完整食谱库",
+      "高级 Boss 击杀路线",
+      "DST 专属团队分工和后期机制"
+    ],
+    "why_expand": [
+      "用户不一定死在首冬，也不一定在第 15-20 天才打开 Agent。",
+      "单机 RoG 和 DST 都是四季认知；只做首冬会让春季雨、夏季过热/自燃等高频痛点无法承接。",
+      "扩到一年四季后，Agent 可以按当前季节直接判断最大风险，而不是把所有问题都强行解释成首冬准备。"
+    ],
+    "risk_control": "扩展只做“季节生存最低闭环”，不做全游戏百科。每季只覆盖环境威胁、资源变化、最低准备、常见死因和临时补救。"
+  },
+  "workload_assessment": {
+    "difficulty": "medium_low",
+    "estimated_effort": "在现有首冬库基础上，约增加 30%-50% 的规则和事实量；不是从零重做。",
+    "why_not_hard": [
+      "首冬库已经有食物链、光源链、保暖链、停尸房死因、控制台援助等骨架。",
+      "四季扩展主要是新增春季的雨/潮湿链、夏季的降温/防火链，秋季作为建设窗口复用首冬准备逻辑。",
+      "仍保持新手最低生存路径，不进入完整装备、全食谱、全 Boss。"
+    ],
+    "new_complexity": [
+      "需要先识别版本：裸 DS 只有 Summer/Winter；RoG/DST 才有 Autumn/Spring/Summer/Winter 四季。",
+      "需要从“首冬三链”升级为“通用生存链 + 当季环境链”。",
+      "停尸房死因要能把 Overheating、Wetness/Freezing、Fire/Burning、Frog、Lightning 等映射到季节问题。"
+    ],
+    "recommendation": "值得做。产品上更完整，技术上可控；但文档标题和输出结构要从“首冬”改成“四季生存”，首冬作为冬季重点子模块保留。"
+  },
+  "version_policy": {
+    "plain_vanilla_ds": {
+      "season_model": "Summer/Winter 两季制；没有 Autumn/Spring。",
+      "agent_behavior": "用户明确说裸本体/无 RoG 时，不要说秋季或春季；用“夏季准备 -> 冬季生存”的二季逻辑。"
+    },
+    "singleplayer_rog": {
+      "season_model": "Autumn/Winter/Spring/Summer 四季制。",
+      "agent_behavior": "作为一年四季主线；默认按新手常见秋季起始讲解，但要能处理春季起始。"
+    },
+    "dont_starve_together": {
+      "season_model": "Autumn/Winter/Spring/Summer 四季制，长度和机制与单机有差异。",
+      "agent_behavior": "基础季节风险可兼容；联机专属内容只提示，不作为首版主线。"
+    }
+  },
+  "generalized_survival_model": {
+    "summary": "四季生存不是把首冬三链简单复制四次，而是“通用生存链 + 当季环境链 + 过季准备链”。",
+    "universal_chains": [
+      {
+        "id": "food_chain",
+        "name_zh": "食物链",
+        "always_relevant": true,
+        "break_result": "饥饿归零 -> 血量持续扣减；同时迫使玩家冒险采集。"
+      },
+      {
+        "id": "light_chain",
+        "name_zh": "光源链",
+        "always_relevant": true,
+        "break_result": "黑暗/夜间行动失败 -> Charlie 攻击、理智下降、意外战斗。"
+      },
+      {
+        "id": "combat_safety_chain",
+        "name_zh": "基础战斗安全链",
+        "always_relevant": true,
+        "break_result": "猎犬、季节生物或低理智暗影把其他断链快速转化为死亡。"
+      },
+      {
+        "id": "base_safety_chain",
+        "name_zh": "基地安全链",
+        "always_relevant": true,
+        "break_result": "火灾、巨人、路线过远、资源区错误会放大食物/光源/环境链风险。"
+      }
+    ],
+    "seasonal_environment_chains": [
+      {
+        "id": "warmth_chain",
+        "main_season": "winter",
+        "name_zh": "保暖链",
+        "break_result": "体温过低 -> 冻结 -> 血量持续扣减。"
+      },
+      {
+        "id": "rain_wetness_chain",
+        "main_season": "spring",
+        "name_zh": "雨季/潮湿链",
+        "break_result": "潮湿上升 -> 工具/燃料/装备效率下降、理智流失、低温时冻结；雷击和青蛙雨制造额外事故。"
+      },
+      {
+        "id": "cooling_chain",
+        "main_season": "summer",
+        "name_zh": "降温链",
+        "break_result": "体温过高 -> 过热 -> 血量持续扣减。"
+      },
+      {
+        "id": "fireproof_base_chain",
+        "main_season": "summer",
+        "name_zh": "防自燃/防火链",
+        "break_result": "野火/自燃 -> 基地、资源和食物系统被烧毁。"
+      }
+    ],
+    "agent_collection_rule": "Agent 优先问当前季节/天数、版本、当季环境链是否闭合，再问食物、光源、战斗、基地。血量/饥饿/理智仍只用于判断应急程度。"
+  },
+  "season_cards": [
+    {
+      "id": "autumn",
+      "name_zh": "秋季",
+      "role": "建设窗口",
+      "default_duration_notes": "RoG/DST 默认秋季约 20 天；RoG 中秋季或春季可能作为起始季。",
+      "source_ids": ["wiki_autumn", "wiki_rog"],
+      "main_risks": [
+        "因为环境太安全而拖延科技和基地",
+        "没有在入冬前建立保暖、食物、光源和战斗基础",
+        "探图过远导致夜间或猎犬事故"
+      ],
+      "minimum_chain_goal": [
+        "科学机器 -> 火坑 -> 锅 -> 长矛/木甲",
+        "定位牛群、兔子洞、石矿区、蜘蛛巢或其他食物路线",
+        "第 15 天后转入冬季准备，不再无目的扩图"
+      ],
+      "output_bias": "秋季不要讲太多后期系统；核心是把玩家从“能活一天”带到“能过下一个季节”。"
+    },
+    {
+      "id": "winter",
+      "name_zh": "冬季",
+      "role": "低温与长夜考验",
+      "default_duration_notes": "RoG 默认冬季约 16 天；DST 首冬约 15 天。秋季起始时，冬季通常在第 21 天前后开始。",
+      "source_ids": ["wiki_winter", "wiki_freezing", "wiki_thermal_stone", "wiki_day_night"],
+      "main_risks": [
+        "保暖链断裂：没有暖石、御寒装备、火源或燃料",
+        "食物链断裂：依赖浆果/胡萝卜/池塘等冬季不稳定来源",
+        "光源链断裂：冬季长夜导致黑暗、理智下降和暗影生物",
+        "猎犬、企鹅群、鹿角怪把准备不足转化为死亡"
+      ],
+      "minimum_chain_goal": [
+        "暖石 + 可回温火源 + 应急营火材料",
+        "锅 + 陷阱/肉丸/肉干等稳定食物闭环",
+        "火坑 + 火把或现做火把材料",
+        "长矛 + 木甲，知道猎犬和鹿角怪的外部处理点"
+      ],
+      "output_bias": "冬季仍沿用首冬三链模型；优先救冻死和断粮，不追求完美基地。"
+    },
+    {
+      "id": "spring",
+      "name_zh": "春季",
+      "role": "雨季与潮湿考验",
+      "default_duration_notes": "RoG/DST 默认春季约 20 天；RoG 中春季也可能作为起始季。",
+      "source_ids": ["wiki_spring", "wiki_wetness", "wiki_rain", "wiki_lightning"],
+      "main_risks": [
+        "长期下雨导致潮湿值上升，工具/武器湿滑、装备和手持物品造成理智损失",
+        "湿度高时体感温度下降，春初仍可能因潮湿触发冻结",
+        "雨天火源燃料效率下降，晾肉架下雨时不干或变慢",
+        "雷击、青蛙雨、发情牛群、蜜蜂变得更有攻击性、兔子洞关闭"
+      ],
+      "minimum_chain_goal": [
+        "雨具或避雨方案：伞、雨帽、雨衣、眼球伞等按可得性选择",
+        "避雷针保护基地核心建筑和可燃资源",
+        "食物路线不要只依赖兔子洞；准备蜘蛛、牛群边缘、怪物肉+填充物等替代方案",
+        "雨天少远行，低理智时先回火源/基地恢复"
+      ],
+      "output_bias": "春季不是单纯“没伞就死”，而是雨水把食物、火源、理智和战斗稳定性一起拖垮。"
+    },
+    {
+      "id": "summer",
+      "name_zh": "夏季",
+      "role": "过热与野火考验",
+      "default_duration_notes": "RoG 默认夏季约 16 天；秋季起始的完整循环中通常在春季之后进入夏季。",
+      "source_ids": ["wiki_summer", "wiki_overheating"],
+      "main_risks": [
+        "降温链断裂：没有冷火、降温装备、冰/冷暖石或遮阴计划导致过热扣血",
+        "防火链断裂：高温下可燃物、植物和结构可能自燃并扩散",
+        "食物腐烂更快，植物会枯萎，需要提前存粮或转移食物结构",
+        "Dragonfly/红猎犬等季节威胁引发火灾或战斗事故"
+      ],
+      "minimum_chain_goal": [
+        "冷火或吸热火坑，至少有可冷却暖石的方案",
+        "基础夏季防暑装备：草帽/伞类/西瓜帽/夏季背心等按资源选择",
+        "基地防火：冰火盆/灭火器/远离主基地活动，或夏季减少靠近可燃基地核心",
+        "冰箱和可持续食物路线，避免食物链被腐烂速度击穿"
+      ],
+      "output_bias": "夏季应急优先级是先降温，再防基地烧毁，最后补食物腐烂问题。"
+    }
+  ],
+  "stage_classifier": [
+    {
+      "id": "unknown_entry",
+      "label": "不知道当前阶段",
+      "ask_first": ["你现在第几天？", "现在是什么季节或屏幕环境像秋/冬/春/夏哪一种？", "你玩的是裸本体、单机 RoG/Giant Edition，还是 DST？"],
+      "fallback": "如果用户答不清，先按停尸房截图或当前最大症状判断：冻伤、潮湿、过热、黑暗、饥饿、怪物击杀。"
+    },
+    {
+      "id": "pre_season_transition",
+      "label": "快换季了，想提前准备",
+      "agent_focus": "识别下一个季节，给 3-5 件最低准备，不讲完整百科。"
+    },
+    {
+      "id": "in_season_emergency",
+      "label": "已经进季节，正在应急",
+      "agent_focus": "先解决当季环境链：冬天保暖、春天避雨/避雷、夏天降温/防火。"
+    },
+    {
+      "id": "repeated_season_death",
+      "label": "反复死在某个季节",
+      "agent_focus": "结合停尸房死因和季节，把最后一击反推为断链：环境链、食物链、光源链、战斗/基地上下文。"
+    }
+  ],
+  "seasonal_death_reasoning": [
+    {
+      "death_signal": ["Freezing", "freeze", "frozen"],
+      "primary_chain": "warmth_chain",
+      "season_context": "冬季高置信；春初或高湿度时也可能发生。",
+      "agent_inference": "优先问暖石、火源、燃料、雨湿程度和是否在外远行。"
+    },
+    {
+      "death_signal": ["Overheating", "heat"],
+      "primary_chain": "cooling_chain",
+      "season_context": "夏季高置信。",
+      "agent_inference": "优先问冷火/吸热火坑、冷暖石、冰箱、遮阴、防暑装备。"
+    },
+    {
+      "death_signal": ["Fire", "Burning", "Burnt"],
+      "primary_chain": "fireproof_base_chain",
+      "season_context": "夏季和雷击场景高置信；也可能是玩家误操作。",
+      "agent_inference": "区分自燃、基地火灾、雷击和战斗火焰；夏季重点查基地防火链。"
+    },
+    {
+      "death_signal": ["Frog", "Frog Rain"],
+      "primary_chain": "rain_wetness_chain",
+      "secondary_chains": ["combat_safety_chain"],
+      "season_context": "春季高置信。",
+      "agent_inference": "青蛙雨不是单纯战斗问题，通常要教玩家避开、引导、别硬打和保持光源/路线。"
+    },
+    {
+      "death_signal": ["Lightning"],
+      "primary_chain": "rain_wetness_chain",
+      "secondary_chains": ["base_safety_chain"],
+      "season_context": "春季高置信，也可能发生在其他雨天。",
+      "agent_inference": "优先问基地是否有避雷针、是否在雨天站在危险位置、是否有可燃建筑保护。"
+    },
+    {
+      "death_signal": ["Hunger", "Starving", "Starvation"],
+      "primary_chain": "food_chain",
+      "season_context": "全年有效；冬季和夏季更常见，春季兔子洞关闭也会触发。",
+      "agent_inference": "不要只问背包食物数量，要问食物路线是否适配当前季节。"
+    },
+    {
+      "death_signal": ["Darkness", "Charlie", "Terrorbeak", "Crawling Horror"],
+      "primary_chain": "light_chain",
+      "secondary_chains": ["food_chain", "rain_wetness_chain"],
+      "season_context": "全年有效；冬季长夜、春季潮湿掉理智更容易放大。",
+      "agent_inference": "优先查移动光源、夜间行动边界和理智恢复，而不是只判战斗问题。"
+    }
+  ],
+  "fixed_output_structure": [
+    {
+      "section_id": "current_biggest_risk",
+      "title": "当前最大季节风险",
+      "instruction": "先说当前最可能断的是哪条链：当季环境链、食物链、光源链、战斗/基地上下文。"
+    },
+    {
+      "section_id": "core_checklist",
+      "title": "核心准备清单",
+      "instruction": "按当前季节分组；只列最低生存所需，不展开全装备树。"
+    },
+    {
+      "section_id": "urgency",
+      "title": "时间紧迫度判断",
+      "instruction": "结合当前天数、季节进度和是否已出现伤害/潮湿/过热/冻结，判断是准备、补救还是应急。"
+    },
+    {
+      "section_id": "minimum_survival_plan",
+      "title": "最低保命方案",
+      "instruction": "给 3-7 步可执行路线；如果用户已经在应急，先救命再优化。"
+    },
+    {
+      "section_id": "optional_assistance",
+      "title": "可选援助",
+      "instruction": "首轮默认给正常攻略路线和对应物资补救代码；不要直接展示可以修改游戏数值的更强代码。只有用户明确追问难度仍太高或想要改数值时，再给属性/开挂代码，并提醒每条代码的影响。"
+    }
+  ]
+}
