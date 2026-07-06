@@ -1,0 +1,432 @@
+{
+  "database": "dont_starve_seasonal_survival",
+  "layer": "morgue_screenshot_interpretation",
+  "last_updated": "2026-07-05",
+  "source_ids": ["wiki_morgue", "wiki_death", "wiki_charlie", "wiki_shadow_creature", "wiki_overheating", "wiki_wetness", "wiki_spring", "wiki_summer"],
+  "purpose": "自动检测优先：用户触发 Skill 后，默认由 App Agent 检测 Steam 和《饥荒》安装，并按单机/联机路径进入停尸房/讣告截图。若自动化失败，再接收用户上传截图。Mavis 负责图片 OCR/视觉抽取，本 Skill 负责校验字段、解释死亡天数和死因、反推当季环境链或通用生存链。",
+  "important_principle": "停尸房的 Cause of Death 是最后一击或直接死亡来源，不一定是根因。Seasonal Agent 要把它转译成“哪条生存链先断”。",
+  "primary_interaction_policy": {
+    "default_entry": "app_agent_auto_detection_first",
+    "auto_detection_first": "用户触发 Skill 后，第一步就是让 App Agent 检测 Steam 和游戏安装；不先问用户有没有截图，也不先把上传截图作为主入口。",
+    "screenshot_upload_fallback": "只有未检测到 Steam/游戏、非 Steam 版本、不在白名单、自动化路径失败、或产品环境不允许自动化时，才请求用户上传截图。",
+    "manual_fallback": "只有无法自动截图、用户也没有截图、OCR 置信度过低且无法确认时，才启用手动问答兜底。",
+    "max_followup_after_screenshot": 1,
+    "allowed_followup_after_screenshot": [
+      "OCR 读不清死因时，问用户确认 Cause of Death 原文。",
+      "用户没有选择介入方式时，问攻略/物资代码/属性代码三选一。",
+      "天数无法读取且需要判断季节时，问用户大概第几天。"
+    ],
+    "do_not_do_after_screenshot": [
+      "不要重复询问截图里已经能读出的生存天数。",
+      "不要让用户手动描述死亡原因，除非 OCR 不确定。",
+      "不要把用户拉回长问卷；资源链状态只作为无截图或低置信兜底。"
+    ]
+  },
+  "product_workflow": {
+    "actors": [
+      {
+        "id": "app_agent",
+        "name_zh": "APP Agent",
+        "responsibility": "打开或切回《饥荒》，进入停尸房/死亡记录界面，并完成截图。",
+        "output_contract": ["screenshot_image", "capture_context_optional"]
+      },
+      {
+        "id": "mavis_vision",
+        "name_zh": "Mavis 本体视觉能力",
+        "responsibility": "读取截图，执行 OCR 和视觉结构化抽取。",
+        "output_contract": ["days_lived", "deceased", "cause_of_death", "mode", "ocr_confidence", "raw_ocr_text"]
+      },
+      {
+        "id": "dont_starve_skill",
+        "name_zh": "饥荒生存规划 Skill",
+        "responsibility": "根据 OCR 字段和规则库推理死亡阶段、根因链、下一局最低修正方案，并按用户介入偏好输出攻略或代码。",
+        "output_contract": ["death_summary", "stage_or_season_inference", "root_chain", "confidence", "next_run_fix", "optional_assistance"]
+      }
+    ],
+    "recommended_sequence": [
+      "用户触发：帮我分析饥荒死因 / 打开饥荒看看我怎么死的 / 上传停尸房截图。",
+      "若没有截图且允许自动操作：APP Agent 先检测 Steam 和游戏安装，再打开游戏并导航到停尸房/讣告，截图。",
+      "Mavis 对截图做 OCR，抽取 Days Lived、Deceased、Cause of Death、Mode。",
+      "Skill 读取结构化 OCR 结果，先输出生存天数和直接死因，再输出根因链和修正建议。",
+      "如果用户已选择介入方式，直接给对应攻略/代码；否则只问一次介入偏好。"
+    ],
+    "implementation_note": "自动打开游戏和截图属于 APP Agent 的动作；图片理解属于 Mavis 本体能力；本 Skill 里应写清楚输入输出契约和推理规则，不需要承担底层截图操作。"
+  },
+  "input_contract": {
+    "preferred_input": {
+      "screenshot_image": "required_if_available",
+      "user_text": "optional",
+      "intervention_preference": "guide_only|item_codes|stat_codes|null"
+    },
+    "vision_extraction_required_fields": [
+      "days_lived",
+      "cause_of_death"
+    ],
+    "vision_extraction_optional_fields": [
+      "deceased",
+      "mode",
+      "raw_ocr_text",
+      "ocr_confidence"
+    ],
+    "minimum_success_condition": "能读出 days_lived 和 cause_of_death 两个字段，即可进入死因分析；mode/deceased 缺失时降置信但不阻塞。"
+  },
+  "pipeline": [
+    {
+      "step": "intent_detection",
+      "name_zh": "意图识别",
+      "goal": "判断用户是不是在让 Agent 读停尸房/死亡记录截图。",
+      "positive_signals": [
+        "用户文本包含：停尸房、morgue、死亡记录、死因、为什么死、帮我看这张图、冬天死了、春天死了、夏天死了",
+        "图片中出现 Morgue/Obituary 类界面",
+        "图片中能看到 Days Lived、Deceased、Cause of Death、Mode 四类列名或近似 OCR 文本"
+      ],
+      "negative_signals": [
+        "图片只是普通游戏画面，没有死亡记录表格",
+        "图片是物品栏/地图/角色面板，不能直接读取最终死因"
+      ],
+      "action_if_positive": "进入 OCR 字段抽取。",
+      "action_if_negative": "改用普通状态诊断，询问当前天数和三条链状态。"
+    },
+    {
+      "step": "image_ocr",
+      "name_zh": "图片 OCR",
+      "goal": "从停尸房表格中抽取结构化死亡样本。",
+      "expected_columns": [
+        {
+          "field": "days_lived",
+          "column_label": "Days Lived",
+          "type": "integer",
+          "notes": "Survival 模式下通常等于死亡时游戏时钟显示的天数；复活后再次死亡会显示该次死亡时的总天数。"
+        },
+        {
+          "field": "deceased",
+          "column_label": "Deceased",
+          "type": "string",
+          "notes": "死亡角色名称或头像。"
+        },
+        {
+          "field": "cause_of_death",
+          "column_label": "Cause of Death",
+          "type": "string",
+          "notes": "停尸房记录的直接死因，怪物名通常来自游戏文件。"
+        },
+        {
+          "field": "mode",
+          "column_label": "Mode",
+          "type": "enum",
+          "values": ["Survival", "Adventure", "Caves"],
+          "notes": "首版优先解释 Survival；Caves/Adventure 需要降置信或提示不在四季基础生存主线内。"
+        }
+      ],
+      "normalization_rules": [
+        "保留 OCR 原文，同时生成 lowercase/trimmed 版本用于匹配。",
+        "把常见 OCR 混淆归一：0/O、l/I、rn/m、cl/d，但不要覆盖原文。",
+        "如果一张图有多条记录，必须抽取所有可读记录；最上方记录只标记为 latest_record，不作为唯一分析对象。",
+        "如果用户明确指定某一条记录，仍要保留全表摘要，但重点解释用户指定记录。",
+        "如果 cause_of_death 置信度低于 0.7，不直接下结论，输出“疑似”并补问一题确认。"
+      ],
+      "structured_output": {
+        "records": [
+          {
+            "days_lived": "integer|null",
+            "deceased": "string|null",
+            "cause_of_death_raw": "string|null",
+            "cause_of_death_normalized": "string|null",
+            "mode": "string|null",
+            "ocr_confidence": "0-1"
+          }
+        ],
+        "latest_record": "record|null",
+        "aggregate_summary": {
+          "readable_record_count": "integer",
+          "day_distribution": "array of {range,label,count,records}",
+          "cause_distribution": "array of {cause_of_death_normalized,count,records}",
+          "root_chain_distribution": "array of {root_chain,count,records}",
+          "dominant_pattern": "string|null",
+          "latest_vs_history": "same_pattern|different_pattern|unknown"
+        }
+      }
+    },
+    {
+      "step": "stage_or_season_inference",
+      "name_zh": "阶段/季节判断",
+      "goal": "用生存天数判断玩家大概死在哪个阶段；如果版本或起始季不确定，则只作为辅助判断。",
+      "rules": [
+        "days_lived 是必读字段，优先直接输出给用户。",
+        "若可确认是 RoG/Giant Edition 秋季起始默认世界，可粗略映射：1-20 秋季，21-36 冬季，37-56 春季，57-72 夏季。",
+        "若用户明确是裸 Don't Starve 本体，则不要判断秋/春/夏，只用 Summer/Winter 两季口径。",
+        "若用户是 DST 或起始季不确定，季节判断降置信；死因映射仍可继续。",
+        "如果 cause_of_death 已经强指向季节风险，如 Overheating/Freezing/Frog/Lightning，可用死因辅助判断季节。"
+      ],
+      "output_fields": [
+        "days_lived",
+        "stage_label",
+        "season_guess",
+        "season_confidence",
+        "season_caveat"
+      ]
+    },
+    {
+      "step": "reasoning",
+      "name_zh": "推理",
+      "goal": "把直接死因转成根因链诊断和下一局补强建议。",
+      "reasoning_order": [
+        "先汇总所有可读记录：死亡天数分布、死因分布、根因链分布。",
+        "判断用户大概常死在什么阶段，以及高频死因是什么。",
+        "再把高频死因和最近一次死因分别匹配到直接死因。",
+        "最后用综合结论反推根因链：冬季保暖链、春季雨湿链、夏季降温/防火链、食物链、光源链，或基地/战斗/探索上下文。"
+      ]
+    }
+  ],
+  "multi_record_analysis_policy": {
+    "default": "多条记录时先做综合分析，再查规则库；不要只分析最新一条。",
+    "latest_record_role": "解释用户最近一次发生了什么。",
+    "aggregate_role": "判断用户长期卡点：常死在哪个天数窗口、哪些死因重复、哪些根因链反复断。",
+    "priority_rules": [
+      "重复出现的死因优先级高于单次偶发死因。",
+      "更早阻断进度的系统性死因优先级高于后期偶发死因。",
+      "如果最近一次死因和历史高频死因不同，输出两段：最近一次解释 + 历史模式建议。",
+      "如果记录横跨多个季节，先按根因链聚类，再用季节补充解释。"
+    ],
+    "required_output": [
+      "可读记录数",
+      "最近一次死亡",
+      "死亡天数分布",
+      "死因分布",
+      "主要根因链",
+      "下一局优先修正方向"
+    ]
+  },
+  "day_window_inference": [
+    {
+      "range": "1-5",
+      "label": "开局基础生存失败",
+      "seasonal_relevance": "early_game",
+      "agent_focus": "先教火把、采集、科学机器，不急着讲完整四季链。"
+    },
+    {
+      "range": "6-14",
+      "label": "秋季建设窗口失败",
+      "seasonal_relevance": "buildout_window",
+      "agent_focus": "检查科技、火坑、锅、基础武器和食物路线是否建立。"
+    },
+    {
+      "range": "15-20",
+      "label": "首冬准备窗口失败",
+      "seasonal_relevance": "winter_preparation_window",
+      "agent_focus": "检查暖石、保暖衣、锅/陷阱、燃料和移动光源。"
+    },
+    {
+      "range": "21-36",
+      "label": "首冬期间死亡",
+      "seasonal_relevance": "winter_critical_window",
+      "agent_focus": "直接按三条链定位根因，并给下一局前 20 天修正方案。"
+    },
+    {
+      "range": "37+",
+      "label": "首冬后或后续季节死亡",
+      "seasonal_relevance": "later_season_contextual",
+      "agent_focus": "结合季节判断：春季看雨湿/雷击/青蛙雨，夏季看过热/火灾/腐烂压力；如果仍是 Freezing/Darkness/Hunger，再回查对应链。"
+    }
+  ],
+  "season_guess_from_days": {
+    "only_use_when": "确认或默认采用 RoG/Giant Edition 秋季起始默认世界；否则降置信或跳过。",
+    "mapping": [
+      {"range": "1-20", "season_guess": "autumn", "confidence": "medium", "label": "秋季建设窗口"},
+      {"range": "21-36", "season_guess": "winter", "confidence": "medium", "label": "首冬生存窗口"},
+      {"range": "37-56", "season_guess": "spring", "confidence": "medium", "label": "春季雨湿窗口"},
+      {"range": "57-72", "season_guess": "summer", "confidence": "medium", "label": "夏季过热/防火窗口"},
+      {"range": "73+", "season_guess": "cycle_repeat_or_later_game", "confidence": "low", "label": "后续循环或后期生存"}
+    ],
+    "caveat": "RoG 可能春季起始，DST 季节长度也有差异；因此季节推断不能覆盖直接死因判断。"
+  },
+  "cause_to_chain_mapping": [
+    {
+      "match_any": ["freezing", "freeze", "frozen"],
+      "direct_label_zh": "冻死",
+      "root_chain": "warmth_chain",
+      "confidence": "high",
+      "interpretation": "保暖链断裂：通常不是血量太低，而是没有暖石/保暖衣/固定火源/便携火源或燃料规划。",
+      "followup_questions": [
+        "你上一局第 15-20 天有没有做暖石？",
+        "出门时有没有带木头、草和树枝做临时火？"
+      ],
+      "recommended_fix": ["第 15 天前做二本", "第 20 天前做暖石", "保留火坑和应急营火材料", "至少兔耳罩，最好冬帽"]
+    },
+    {
+      "match_any": ["hunger", "starving", "starvation"],
+      "direct_label_zh": "饿死",
+      "root_chain": "food_chain",
+      "confidence": "medium",
+      "interpretation": "食物链断裂：冬季植物/池塘不可靠，春季兔子洞关闭会换掉常用食物路线，夏季食物腐烂更快。根因通常是没有锅、替代食物路线、保鲜或存粮。",
+      "followup_questions": [
+        "你入冬前有没有锅？",
+        "有没有在兔子洞放陷阱，或者用怪物肉+填充物做肉丸？"
+      ],
+      "recommended_fix": ["第 10 天前做锅", "第 15 天前布 4-8 个陷阱", "优先肉丸续饥饿", "有余力做晾肉架补理智和存粮"]
+    },
+    {
+      "match_any": ["darkness", "charlie"],
+      "direct_label_zh": "黑暗/Charlie 死亡",
+      "root_chain": "light_chain",
+      "confidence": "high",
+      "interpretation": "光源链断裂：夜晚没有稳定光源或移动光源，冬季长夜把火把/燃料不足放大。Maxwell 被 Charlie 杀死时停尸房可能显示 Charlie，其他角色通常显示 Darkness。",
+      "followup_questions": [
+        "夜晚是在基地还是在外面？",
+        "身上有没有备用火把或能立刻做火把的草和树枝？"
+      ],
+      "recommended_fix": ["火坑作为固定光源", "出门至少 2 根火把或等价材料", "冬季夜间不远行", "燃料不足时优先回基地整理"]
+    },
+    {
+      "match_any": ["terrorbeak", "crawling horror", "crawlinghorror", "shadow creature", "nightmare"],
+      "direct_label_zh": "暗影生物击杀",
+      "root_chain": "light_chain",
+      "secondary_chains": ["food_chain"],
+      "confidence": "high",
+      "interpretation": "理智崩溃引发的连锁死亡：暗影生物是结果，根因通常是冬季长夜、黑暗压力、缺少理智恢复食物，或食物链不足导致长期冒险和低恢复。",
+      "followup_questions": [
+        "入冬后有没有小肉干/肉干或冬帽这类理智恢复手段？",
+        "是不是经常晚上赶路或在低光环境待太久？"
+      ],
+      "recommended_fix": ["把光源链列为核心链", "做小肉干/肉干恢复理智", "冬帽可兼顾保暖和少量理智", "低理智时停止远行，先回火源附近恢复"]
+    },
+    {
+      "match_any": ["overheating", "overheat", "heat"],
+      "direct_label_zh": "过热死亡",
+      "root_chain": "cooling_chain",
+      "confidence": "high",
+      "interpretation": "夏季降温链断裂：没有冷火/吸热火坑、冷暖石、遮阴或防暑装备，体温过高后转化为持续扣血。",
+      "followup_questions": [
+        "你死亡时是不是已经夏天，屏幕边缘有橙红色过热提示？",
+        "有没有冷火、冰箱里冷却的暖石、冰或防暑装备？"
+      ],
+      "recommended_fix": ["夏季前准备吸热火坑或冷火材料", "用冰箱冷却暖石", "准备草帽/伞类/夏季装备", "中午少远行，先找树荫或冷源"]
+    },
+    {
+      "match_any": ["fire", "burning", "burnt", "smoldering"],
+      "direct_label_zh": "火灾/燃烧死亡",
+      "root_chain": "fireproof_base_chain",
+      "confidence": "medium",
+      "interpretation": "可能是夏季野火/自燃、雷击、玩家误操作或火系怪物导致。若发生在夏季或基地附近，优先判断防火链和基地安全链。",
+      "followup_questions": [
+        "这是夏天基地或资源区自燃，还是你自己点火/战斗导致？",
+        "基地有没有灭火器，或者夏天有没有减少靠近可燃核心建筑？"
+      ],
+      "recommended_fix": ["夏季前处理基地防火", "可用灭火器保护核心区", "重要建筑别贴密集可燃物", "夏天避免在主基地附近引火战斗"]
+    },
+    {
+      "match_any": ["frog", "frog rain"],
+      "direct_label_zh": "青蛙/青蛙雨击杀",
+      "root_chain": "rain_wetness_chain",
+      "secondary_chains": ["combat_safety_chain"],
+      "confidence": "high",
+      "interpretation": "春季事故链：青蛙雨容易把玩家围住，强行打会滚雪球。根因通常是雨季路线和避战计划不足。",
+      "followup_questions": [
+        "死亡时是不是春天在下雨，突然刷了很多青蛙？",
+        "你当时是硬打、逃跑失败，还是背包东西被打掉后混乱？"
+      ],
+      "recommended_fix": ["青蛙雨时先跑，不硬打", "引到牛群/蜘蛛等外部生物", "避开狭窄基地", "春季出门保留光源和撤退路线"]
+    },
+    {
+      "match_any": ["lightning"],
+      "direct_label_zh": "雷击死亡",
+      "root_chain": "rain_wetness_chain",
+      "secondary_chains": ["base_safety_chain"],
+      "confidence": "medium",
+      "interpretation": "春季雷击风险：直接死因是雷，但根因通常是缺避雷针、雨天暴露或基地可燃物未保护。",
+      "followup_questions": [
+        "基地有没有避雷针？",
+        "死亡时是在基地附近、雨天野外，还是可燃建筑旁？"
+      ],
+      "recommended_fix": ["春季前在基地建避雷针", "雨天少站在危险区域", "保护核心建筑和可燃资源"]
+    },
+    {
+      "match_any": ["hound", "blue hound", "ice hound", "icehound"],
+      "direct_label_zh": "猎犬/蓝猎犬击杀",
+      "root_chain": "context_combat_and_accidents",
+      "secondary_chains": ["warmth_chain", "light_chain"],
+      "confidence": "medium",
+      "interpretation": "准备不足导致的意外死亡：最终死因是战斗，但根因多半是没有护甲武器、处理地点不对，或在冻伤、过热、雨天、黑夜、远离基地时被猎犬追上。",
+      "followup_questions": [
+        "死亡时你有木甲/足球头盔和长矛吗？",
+        "猎犬来时是在主基地、夜晚，还是外出采集路上？"
+      ],
+      "recommended_fix": ["第 10 天前做长矛和木甲", "猎犬来时离开主基地到开阔地", "可引到牛群/蜘蛛/企鹅", "冬季听到猎犬声先穿甲和回温"]
+    },
+    {
+      "match_any": ["deerclops"],
+      "direct_label_zh": "鹿角怪击杀",
+      "root_chain": "context_base_and_accidents",
+      "secondary_chains": ["warmth_chain", "light_chain"],
+      "confidence": "high",
+      "interpretation": "准备不足导致的意外死亡：新手最低目标不是击杀鹿角怪，而是听到提示后把它引离主基地，保住火源、锅和存粮。",
+      "followup_questions": [
+        "鹿角怪来时你是在主基地等它吗？",
+        "有没有准备基地外的临时火源和便宜结构？"
+      ],
+      "recommended_fix": ["听到巨兽提示后离开主基地", "带暖石和燃料去基地外", "不要把击杀鹿角怪当首冬最低目标", "基地核心建筑不要过密"]
+    },
+    {
+      "match_any": ["pig", "pig man", "tentacle", "spider", "beefalo", "killer bee", "pengull", "penguin"],
+      "direct_label_zh": "普通生物/中立生物击杀",
+      "root_chain": "context_combat_and_accidents",
+      "confidence": "medium",
+      "interpretation": "多半是探索/采集/战斗决策问题。若 days_lived 在 15-36，要继续检查为什么必须冒这个险：食物链不足、保暖链限制、或夜间赶路。",
+      "followup_questions": [
+        "你当时是在找食物、找材料，还是主动打怪？",
+        "有没有因为没食物/没暖石被迫远行？"
+      ],
+      "recommended_fix": ["下一局减少冬季远行", "先建立三条链再主动打怪", "采集路线靠近基地和火源"]
+    },
+    {
+      "match_any": ["poison", "resurrection sickness", "shenanigans"],
+      "direct_label_zh": "非四季主线或未知死因",
+      "root_chain": "out_of_scope_or_low_confidence",
+      "confidence": "low",
+      "interpretation": "可能是 DLC、控制台、环境事故或停尸房未知死因。不要强行归入四季基础生存链，先补问上下文。",
+      "followup_questions": [
+        "这是单机 RoG/Giant Edition、裸本体、DST，还是其他 DLC/开了 mod？",
+        "死亡前你在做什么？"
+      ],
+      "recommended_fix": ["先确认版本和场景", "如果仍在四季基础生存范围内，再回到对应季节链诊断"]
+    }
+  ],
+      "inference_output_schema": {
+    "fields": [
+      "image_intent",
+      "ocr_records",
+      "selected_record_reason",
+      "days_lived",
+      "season_or_stage_guess",
+      "direct_death_cause",
+      "root_chain",
+      "confidence",
+      "why_this_is_the_chain",
+      "next_run_fix",
+      "intervention_options",
+      "followup_question_if_needed"
+    ],
+    "example": {
+      "image_intent": "morgue_screenshot",
+      "selected_record_reason": "Survival 模式第 23 天死亡，处于首冬期间。",
+      "days_lived": 23,
+      "season_or_stage_guess": "冬季/首冬窗口，基于秋季起始默认世界推断。",
+      "direct_death_cause": "Darkness",
+      "root_chain": "light_chain",
+      "confidence": "high",
+      "why_this_is_the_chain": "直接死因是黑暗，但根因是移动光源或燃料规划断裂；冬季长夜提高了这个风险。",
+      "next_run_fix": ["出门带 2 根火把或材料", "第 20 天前整理木头/草/树枝", "冬季夜间不远行"],
+      "intervention_options": ["只给攻略", "给物资代码", "修改人物属性代码"],
+      "followup_question_if_needed": null
+    }
+  },
+  "agent_response_rules": [
+    "截图可用时，第一句先给读图结果：你活了多少天，停尸房显示死因是什么。",
+    "不要只复述停尸房死因，要解释“最后一击”和“根因链”的区别。",
+    "如果死因是暗影生物，不要默认用户战斗差；优先诊断光源链和理智恢复。",
+    "如果死因是猎犬/鹿角怪，不要把它并入三条核心链；作为准备不足和上下文放大因子处理。",
+    "如果 OCR 不确定，最多补问 1 个确认问题，然后给低置信建议。",
+    "如果多次死亡记录集中在第 21-36 天，优先输出首冬三链修正路线。",
+    "如果多次死亡记录集中在后续春季或夏季，优先输出雨湿链或降温/防火链修正路线。"
+  ]
+}
