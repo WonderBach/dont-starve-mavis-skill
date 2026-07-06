@@ -1,0 +1,563 @@
+{
+  "database": "dont_starve_seasonal_survival",
+  "language": "zh-CN",
+  "status": "draft_for_mentor_review",
+  "last_updated": "2026-07-05",
+  "scope": {
+    "primary_target": "Don't Starve 单机 Reign of Giants / Giant Edition 默认世界，一年四季基础生存；首冬作为冬季重点子模块保留",
+    "why_not_bare_vanilla_as_main": "裸 Don't Starve 本体只有 Summer/Winter 两季，没有 Autumn/Spring；但当前中文玩家说“单机普通世界”时经常默认启用 RoG/Giant Edition 语境。产品应以玩家实际认知的四季世界为主线，并在数据库里保留裸 DS/DST 差异。",
+    "excluded_initially": ["年节/活动特殊内容", "完整 DLC 体系", "全角色打法", "完整食谱", "高级 Boss 击杀", "洞穴/远古", "联机专属机制"]
+  },
+  "version_matrix": [
+    {
+      "id": "singleplayer_rog_autumn_start",
+      "label": "单机 RoG 秋季起始世界",
+      "priority": "primary",
+      "assumptions": [
+        "玩家启用 Reign of Giants 内容",
+        "世界自定义维持默认季节长度",
+        "本 MVP 将“开局为秋季”作为目标场景"
+      ],
+      "timeline": [
+        {
+          "season": "autumn",
+          "days": "1-20",
+          "duration_days": 20,
+          "meaning_for_newbie": "安全窗口；主要任务是科技、基地、火源、食物和保暖准备。",
+          "source_ids": ["wiki_autumn"]
+        },
+        {
+          "season": "winter",
+          "days": "21-36",
+          "duration_days": 16,
+          "meaning_for_newbie": "首冬考验；冻结、食物再生减慢、长夜、猎犬和鹿角怪风险集中出现。",
+          "source_ids": ["wiki_winter"]
+        },
+        {
+          "season": "spring",
+          "days": "37-56",
+          "duration_days": 20,
+          "meaning_for_newbie": "雨季考验；潮湿、雷击、青蛙雨、兔子洞关闭和发情牛群改变原有生存路线。",
+          "source_ids": ["wiki_spring", "wiki_wetness", "wiki_lightning"]
+        },
+        {
+          "season": "summer",
+          "days": "约 56 天后进入，默认持续约 16 天",
+          "duration_days": 16,
+          "meaning_for_newbie": "高温与防火考验；过热、自燃/野火、食物腐烂加速和植物枯萎会击穿基地与食物系统。",
+          "source_ids": ["wiki_summer", "wiki_overheating"]
+        }
+      ],
+      "important_caveat": "RoG 的 Autumn/Spring 页面说明 Autumn 或 Spring 都可能作为起始季。产品可以把“秋季开局”作为常见预设，但 Agent 若发现玩家不是秋季起始，应提醒时间线不同。",
+      "source_ids": ["wiki_rog", "wiki_autumn", "wiki_winter", "wiki_spring", "wiki_summer"]
+    },
+    {
+      "id": "bare_vanilla_ds",
+      "label": "裸 Don't Starve 本体",
+      "priority": "compatibility_note",
+      "season_model": "Summer/Winter 两季制，无 Autumn/Spring。",
+      "timeline": [
+        {
+          "season": "summer",
+          "days": "1-20",
+          "duration_days": 20,
+          "source_ids": ["wiki_winter", "wiki_day_night"]
+        },
+        {
+          "season": "winter",
+          "days": "21-36",
+          "duration_days": 16,
+          "source_ids": ["wiki_winter", "wiki_day_night"]
+        }
+      ],
+      "agent_note": "如果用户明确说没有开 RoG/DLC，就不要说“秋季开局”；改说“夏季准备期 -> 第 21 天入冬”。"
+    },
+    {
+      "id": "dont_starve_together",
+      "label": "Don't Starve Together",
+      "priority": "compatibility_note",
+      "timeline": [
+        {
+          "season": "winter",
+          "days": "21-35",
+          "duration_days": 15,
+          "source_ids": ["wiki_winter"]
+        }
+      ],
+      "agent_note": "DST 首冬为第 21 天开始，到第 35 天结束；多人、复活、部分物品机制和单机不同，首版只作为兼容提醒。"
+    }
+  ],
+  "global_time_facts": [
+    {
+      "id": "day_length",
+      "fact": "默认设置下，游戏内 1 天等于现实时间 8 分钟，由 16 个 30 秒片段组成。",
+      "source_ids": ["wiki_day_night"]
+    },
+    {
+      "id": "winter_long_dusk_night",
+      "fact": "冬季黄昏和夜晚更长；夜晚必须有光源，否则会被 Charlie 攻击，且黑暗中理智下降更快。",
+      "source_ids": ["wiki_day_night", "wiki_winter"]
+    },
+    {
+      "id": "planning_window",
+      "fact_type": "product_heuristic",
+      "fact": "面向新手的首冬准备提醒窗口建议从第 15 天开始强提示，第 18-20 天进入临时补救模式，第 21 天后进入冬季应急模式。",
+      "reason": "冬季第 21 天开始；新手需要数天完成科技、保暖、食物和燃料补齐。"
+    }
+  ],
+  "seasonal_survival_scope": {
+    "summary": "四季生存库只覆盖一年内基础生存，不覆盖完整百科。秋季是建设窗口，冬季是保暖/长夜窗口，春季是雨湿窗口，夏季是降温/防火窗口。",
+    "season_to_primary_chain": [
+      {"season": "autumn", "primary_chain": "buildout_chain", "focus": "科技、基地、锅、火源、基础战斗和下季准备。"},
+      {"season": "winter", "primary_chain": "warmth_chain", "focus": "暖石、御寒装备、火源、燃料和冬季食物路线。"},
+      {"season": "spring", "primary_chain": "rain_wetness_chain", "focus": "雨具、避雷、潮湿控制、青蛙雨/发情牛群避险和替代食物路线。"},
+      {"season": "summer", "primary_chain": "cooling_and_fireproof_chain", "focus": "冷火、冷暖石、防暑装备、基地防火、食物保鲜和避免自燃。"}
+    ],
+    "source_ids": ["wiki_autumn", "wiki_winter", "wiki_spring", "wiki_summer", "wiki_wetness", "wiki_overheating"]
+  },
+  "death_logic_framework": {
+    "summary": "冬季/首冬死亡根因按三条链判断：保暖链、食物链、光源链。四季总模型见 seasonal_survival_scope 和 data/seasonal_survival.json。血量/饥饿/理智是实时结果，不能替代链状态。",
+    "chains": [
+      {
+        "id": "warmth_chain",
+        "name_zh": "保暖链",
+        "break_path": "没有御寒装备/暖石/火源/燃料 -> 体温降低 -> 冻结 -> 血量持续扣减 -> 冻死",
+        "observable_ui_result": ["血量下降"],
+        "winter_specific": true
+      },
+      {
+        "id": "food_chain",
+        "name_zh": "食物链",
+        "break_path": "冬季食物来源断裂 -> 饥饿值归零 -> 血量持续扣减；同时迫使玩家远行，拖累保暖链和光源链",
+        "observable_ui_result": ["饥饿值下降", "血量下降"],
+        "winter_specific": false
+      },
+      {
+        "id": "light_chain",
+        "name_zh": "光源链",
+        "break_path": "长夜/黑暗/燃料不足 -> 理智持续下降或 Charlie 攻击 -> 暗影生物出现 -> 被打掉血",
+        "observable_ui_result": ["理智下降", "血量下降"],
+        "winter_specific": false,
+        "winter_reason": "冬季昼短夜长，让光源和理智问题更容易变成死亡。"
+      }
+    ],
+    "agent_collection_rule": "Agent 应优先收集链状态：有没有御寒装备和暖石、食物储备和来源是否稳定、光源和燃料如何规划。三维数值只用于判断当前是否需要立即救急。"
+  },
+  "freezing": {
+    "body_temperature_thresholds": [
+      {
+        "temperature": 5,
+        "effect": "屏幕边缘出现结冰提示，表示即将冻结。",
+        "source_ids": ["wiki_freezing"]
+      },
+      {
+        "temperature": 0,
+        "effect": "体温低于 0 度开始冻结并损失生命。",
+        "source_ids": ["wiki_freezing"]
+      }
+    ],
+    "damage": {
+      "value": "1.25 health/second",
+      "condition": "体温低于 0 度且未重新升到 0 度以上。",
+      "source_ids": ["wiki_freezing"]
+    },
+    "practical_rule": "首冬保暖不是只穿衣服；衣服只是延缓降温，真正的安全循环是加热暖石、规划火源、携带燃料和应急火。",
+    "source_ids": ["wiki_freezing", "wiki_thermal_stone", "wiki_winter"]
+  },
+  "craftables": [
+    {
+      "id": "science_machine",
+      "name_zh": "科学机器",
+      "name_en": "Science Machine",
+      "role": ["科技入口", "解锁背包、锅、晾肉架、长矛、木甲等首冬基础设施"],
+      "recipe": [{"item": "Gold Nugget", "count": 1}, {"item": "Log", "count": 4}, {"item": "Rocks", "count": 4}],
+      "station": "none",
+      "spawn_code": "researchlab",
+      "source_ids": ["wiki_science_machine"]
+    },
+    {
+      "id": "alchemy_engine_rog",
+      "name_zh": "炼金引擎",
+      "name_en": "Alchemy Engine",
+      "role": ["二本科技", "解锁暖石、冰箱、冬帽、足球头盔等关键物品"],
+      "recipe": [{"item": "Boards", "count": 4}, {"item": "Cut Stone", "count": 2}, {"item": "Electrical Doodad", "count": 2}],
+      "station": "Science Machine",
+      "version_note": "RoG/DLC 配方；裸 DS 配方为 4 Boards + 2 Cut Stone + 6 Gold Nuggets。",
+      "spawn_code": "researchlab2",
+      "source_ids": ["wiki_alchemy_engine", "wiki_refined_materials"]
+    },
+    {
+      "id": "thermal_stone",
+      "name_zh": "暖石/热能石",
+      "name_en": "Thermal Stone",
+      "capability": "warmth",
+      "priority": "must_have",
+      "recipe": [{"item": "Rocks", "count": 10}, {"item": "Pickaxe", "count": 1}, {"item": "Flint", "count": 3}],
+      "station": "Alchemy Engine",
+      "spawn_code": "heatrock",
+      "why_it_matters": "携带加热后的暖石可以延缓或防止离开火源后的冻结，是新手首冬最核心的移动保暖工具。",
+      "notes": [
+        "暖石会从火源吸热，可在地上、箱子里或玩家背包里吸热。",
+        "暖石不是永久保暖，需要定期回到火源加热。",
+        "在单机 RoG 里仍建议作为首冬最低保暖核心。"
+      ],
+      "source_ids": ["wiki_thermal_stone", "wiki_winter"]
+    },
+    {
+      "id": "rabbit_earmuffs",
+      "name_zh": "兔耳罩",
+      "name_en": "Rabbit Earmuffs",
+      "capability": "warmth",
+      "priority": "backup_or_emergency",
+      "recipe": [{"item": "Rabbit", "count": 2}, {"item": "Twigs", "count": 1}],
+      "station": "Science Machine",
+      "insulation": 60,
+      "durability": "5 days",
+      "spawn_code": "earmuffshat",
+      "why_it_matters": "门槛低，适合快入冬但缺丝、牛毛或二本时临时补保暖。",
+      "source_ids": ["wiki_rabbit_earmuffs"]
+    },
+    {
+      "id": "winter_hat",
+      "name_zh": "冬帽",
+      "name_en": "Winter Hat",
+      "capability": "warmth",
+      "priority": "recommended",
+      "recipe": [{"item": "Beefalo Wool", "count": 4}, {"item": "Silk", "count": 4}],
+      "station": "Alchemy Engine",
+      "insulation": 120,
+      "sanity_effect": "+1.33/min while worn",
+      "durability": "10 days",
+      "spawn_code": "winterhat",
+      "why_it_matters": "保暖强于兔耳罩，并提供少量理智恢复；但需要牛毛、蜘蛛丝和二本。",
+      "source_ids": ["wiki_winter_hat"]
+    },
+    {
+      "id": "beefalo_hat",
+      "name_zh": "牛帽",
+      "name_en": "Beefalo Hat",
+      "capability": "warmth",
+      "priority": "strong_but_costly",
+      "recipe": [{"item": "Beefalo Wool", "count": 8}, {"item": "Beefalo Horn", "count": 1}],
+      "station": "Science Machine",
+      "insulation": 240,
+      "durability": "10 days",
+      "spawn_code": "beefalohat",
+      "why_it_matters": "保暖很强，但需要牛角，对新手不是最低路径。",
+      "source_ids": ["wiki_beefalo_hat"]
+    },
+    {
+      "id": "campfire",
+      "name_zh": "营火",
+      "name_en": "Campfire",
+      "capability": ["warmth", "light", "cooking"],
+      "priority": "emergency_or_travel",
+      "recipe": [{"item": "Cut Grass", "count": 3}, {"item": "Log", "count": 2}],
+      "station": "none",
+      "spawn_code": "campfire",
+      "notes": [
+        "可从开局直接制作。",
+        "不能重燃，燃料效率低于火坑。",
+        "在冬天可提供足够热量，但需要玩家靠近并持续加燃料。"
+      ],
+      "source_ids": ["wiki_campfire"]
+    },
+    {
+      "id": "fire_pit",
+      "name_zh": "火坑",
+      "name_en": "Fire Pit",
+      "capability": ["warmth", "light", "cooking", "base_stability"],
+      "priority": "must_have_base",
+      "recipe": [{"item": "Log", "count": 2}, {"item": "Rocks", "count": 12}],
+      "station": "none",
+      "spawn_code": "firepit",
+      "notes": [
+        "可重燃，持久结构，燃料效率优于营火。",
+        "火坑是大多数基地的中心，但固定后不能直接移动。",
+        "冬季站在火坑附近并加燃料可避免冻死。"
+      ],
+      "source_ids": ["wiki_campfire"]
+    },
+    {
+      "id": "torch",
+      "name_zh": "火把",
+      "name_en": "Torch",
+      "capability": "light",
+      "priority": "must_have_emergency",
+      "recipe": [{"item": "Cut Grass", "count": 2}, {"item": "Twigs", "count": 2}],
+      "station": "none",
+      "duration": "75 seconds / 2.5 clock segments",
+      "spawn_code": "torch",
+      "version_note": "RoG 中火把不再提供保暖；它主要是移动光源和点燃应急热源的工具。",
+      "source_ids": ["wiki_torch"]
+    },
+    {
+      "id": "crock_pot",
+      "name_zh": "烹饪锅",
+      "name_en": "Crock Pot",
+      "capability": "food",
+      "priority": "recommended",
+      "recipe": [{"item": "Cut Stone", "count": 3}, {"item": "Charcoal", "count": 6}, {"item": "Twigs", "count": 6}],
+      "station": "Science Machine",
+      "spawn_code": "cookpot",
+      "why_it_matters": "把零散肉类、浆果、胡萝卜等基础食物转成高饱食食物，是新手首冬食物续航核心。",
+      "source_ids": ["wiki_crock_pot"]
+    },
+    {
+      "id": "ice_box_rog",
+      "name_zh": "冰箱",
+      "name_en": "Ice Box",
+      "capability": "food_storage",
+      "priority": "nice_to_have",
+      "recipe": [{"item": "Cut Stone", "count": 1}, {"item": "Gears", "count": 1}, {"item": "Gold Nugget", "count": 2}],
+      "station": "Alchemy Engine",
+      "spawn_code": "icebox",
+      "effect": "食物腐烂速度减半。",
+      "version_note": "RoG/DLC 配方；裸 DS 为 1 Boards + 1 Gears + 2 Gold Nuggets。",
+      "source_ids": ["wiki_ice_box"]
+    },
+    {
+      "id": "drying_rack",
+      "name_zh": "晾肉架",
+      "name_en": "Drying Rack",
+      "capability": ["food", "sanity"],
+      "priority": "recommended_if_time",
+      "recipe": [{"item": "Twigs", "count": 3}, {"item": "Charcoal", "count": 2}, {"item": "Rope", "count": 3}],
+      "station": "Science Machine",
+      "spawn_code": "meatrack",
+      "why_it_matters": "肉干腐烂慢并补理智；兔子/鸟类等小肉来源可转小肉干，应对冬季长夜理智压力。",
+      "source_ids": ["wiki_drying_rack", "wiki_meat", "wiki_morsel"]
+    },
+    {
+      "id": "trap",
+      "name_zh": "陷阱",
+      "name_en": "Trap",
+      "capability": "food",
+      "priority": "recommended",
+      "recipe": [{"item": "Cut Grass", "count": 6}, {"item": "Twigs", "count": 2}],
+      "station": "none",
+      "uses": 8,
+      "spawn_code": "trap",
+      "why_it_matters": "可放在兔子洞上方抓兔子；冬季兔子仍然活跃，是稳定小肉来源。",
+      "source_ids": ["wiki_trap", "wiki_rabbit", "wiki_winter"]
+    },
+    {
+      "id": "spear",
+      "name_zh": "长矛",
+      "name_en": "Spear",
+      "capability": "combat",
+      "priority": "must_have",
+      "recipe": [{"item": "Twigs", "count": 2}, {"item": "Rope", "count": 1}, {"item": "Flint", "count": 1}],
+      "station": "Science Machine",
+      "damage": 34,
+      "durability": "150 uses",
+      "spawn_code": "spear",
+      "source_ids": ["wiki_spear"]
+    },
+    {
+      "id": "log_suit",
+      "name_zh": "木甲",
+      "name_en": "Log Suit",
+      "capability": "combat",
+      "priority": "must_have",
+      "recipe": [{"item": "Log", "count": 8}, {"item": "Rope", "count": 2}],
+      "station": "Science Machine",
+      "protection": "80% physical damage absorption",
+      "durability": "450 hp",
+      "spawn_code": "armorwood",
+      "source_ids": ["wiki_log_suit"]
+    },
+    {
+      "id": "football_helmet",
+      "name_zh": "足球头盔",
+      "name_en": "Football Helmet",
+      "capability": "combat",
+      "priority": "recommended",
+      "recipe": [{"item": "Pig Skin", "count": 1}, {"item": "Rope", "count": 1}],
+      "station": "Alchemy Engine",
+      "protection": "80% physical damage absorption",
+      "durability": "450 hp",
+      "spawn_code": "footballhat",
+      "why_it_matters": "占头部栏位，保留背包；应对猎犬和意外战斗很好用。",
+      "source_ids": ["wiki_football_helmet"]
+    }
+  ],
+  "food_recipes": [
+    {
+      "id": "meatballs",
+      "name_zh": "肉丸",
+      "name_en": "Meatballs",
+      "station": "Crock Pot",
+      "recipe_logic": "任意肉类 + 3 个填充物；不要放树枝；肉度达到 3 会变成肉汤，2 个以上怪物食物会变成怪物千层饼。",
+      "stats": {"health": 3, "hunger": 62.5, "sanity": 5, "spoilage": "10 days", "cook_time": "15 sec"},
+      "use_case": "首冬最稳的饱食基础餐，适合用 1 小肉/怪物肉 + 3 浆果/胡萝卜/冰等填充物。",
+      "spawn_code": "meatballs",
+      "source_ids": ["wiki_meatballs"]
+    },
+    {
+      "id": "pierogi",
+      "name_zh": "饺子",
+      "name_en": "Pierogi",
+      "station": "Crock Pot",
+      "recipe_logic": "1 蛋 + 肉度大于 0.25 + 菜度大于 0.25 + 1 填充物；不能放树枝。",
+      "stats": {"health": 40, "hunger": 37.5, "sanity": 5, "spoilage": "20 days", "cook_time": "20 sec"},
+      "use_case": "回血进阶项，需要蛋来源；首版只作为有鸟笼/蛋时的推荐，不作为最低保命要求。",
+      "spawn_code": "perogies",
+      "source_ids": ["wiki_pierogi"]
+    },
+    {
+      "id": "jerky",
+      "name_zh": "肉干",
+      "name_en": "Jerky",
+      "station": "Drying Rack",
+      "recipe_logic": "生 Meat 在晾肉架上晾 2 天。",
+      "stats": {"health": 20, "hunger": 25, "sanity": 15, "spoilage": "20 days"},
+      "use_case": "食物、回血和理智一起补；适合冬前挂架储备。",
+      "spawn_code": "meat_dried",
+      "source_ids": ["wiki_meat", "wiki_drying_rack"]
+    },
+    {
+      "id": "small_jerky",
+      "name_zh": "小肉干",
+      "name_en": "Small Jerky",
+      "station": "Drying Rack",
+      "recipe_logic": "生 Morsel/Frog Legs/Fish/Drumstick 等在晾肉架上晾 1 天。",
+      "stats": {"health": 8, "hunger": 12.5, "sanity": 10, "spoilage": "20 days"},
+      "use_case": "兔子和鸟类来源稳定时，解决冬天长夜理智问题很好用。",
+      "spawn_code": "smallmeat_dried",
+      "source_ids": ["wiki_morsel", "wiki_drying_rack"]
+    }
+  ],
+  "winter_changes": [
+    {
+      "id": "resource_regrowth_slow",
+      "fact": "冬季浆果丛、树苗、草丛、芦苇等再生极慢，接近停止。",
+      "impact": "冬前应主动采集并储备草、树枝、木头、浆果/肉类；不要指望入冬后靠植物自然补给。",
+      "source_ids": ["wiki_winter"]
+    },
+    {
+      "id": "farms_stop_growing",
+      "fact": "冬季大部分时间温度过低，农场作物不会继续生长；已经成熟待收的作物仍会保持新鲜直到采摘。",
+      "impact": "首冬最低方案不应依赖农场新产出。",
+      "source_ids": ["wiki_winter"]
+    },
+    {
+      "id": "rabbits_still_available",
+      "fact": "冬季兔子会变成白色冬毛，但仍然活跃，是稳定食物来源。",
+      "impact": "靠近草原/兔子洞布陷阱，是新手安全续航方式。",
+      "source_ids": ["wiki_winter", "wiki_rabbit", "wiki_trap"]
+    },
+    {
+      "id": "bees_inactive",
+      "fact": "冬季蜜蜂不会离巢，蜂箱不产蜜。",
+      "impact": "蜂蜜应在冬前储备；首冬新手不要把冬季蜂蜜当成主要新增食物来源。",
+      "source_ids": ["wiki_winter"]
+    },
+    {
+      "id": "ponds_frozen",
+      "fact": "冬季池塘冻结，青蛙和蚊子不会正常从池塘出现，池塘也不能钓鱼。",
+      "impact": "冬季钓鱼和青蛙腿来源不稳定，不应作为首冬最低方案。",
+      "source_ids": ["wiki_winter"]
+    },
+    {
+      "id": "winter_spoilage_slow",
+      "fact": "冬季易腐物品腐烂速度比平时慢 25%；冰不会融化。",
+      "impact": "冬季存粮压力比夏季小，但这不能替代提前准备稳定食物来源。",
+      "source_ids": ["wiki_winter"]
+    },
+    {
+      "id": "snowbirds_and_blue_hounds",
+      "fact": "冬季红雀会被雪雀替代；猎犬袭击中红猎犬会被蓝猎犬替代。",
+      "impact": "蓝猎犬死亡有冰冻效果，处理猎犬时尽量穿甲并借助牛群、企鹅等外部战力。",
+      "source_ids": ["wiki_winter", "wiki_hound"]
+    }
+  ],
+  "threats": [
+    {
+      "id": "freezing",
+      "name_zh": "冻结",
+      "severity_for_newbie": "critical",
+      "when": "冬季全程，尤其夜晚、远离火源、暖石冷却后。",
+      "failure_pattern": "只有火坑但没有暖石/衣服，出门采集时冻死；或晚上燃料不足冻死。",
+      "countermeasures": ["暖石", "火坑", "应急营火材料", "冬帽/兔耳罩/牛帽", "携带足够木头、草、树枝"],
+      "source_ids": ["wiki_freezing", "wiki_thermal_stone", "wiki_winter"]
+    },
+    {
+      "id": "hounds",
+      "name_zh": "猎犬袭击",
+      "severity_for_newbie": "high",
+      "when": "周期性发生；默认会随天数推进而升级。冬季可能混入蓝猎犬。",
+      "failure_pattern": "无甲无武器在基地硬跑，被多只猎犬围住；或者把猎犬带进易燃/重要结构区造成连锁损失。",
+      "countermeasures": ["长矛", "木甲", "足球头盔", "把猎犬引到牛群/蜘蛛/企鹅等生物处", "在基地外开阔地处理"],
+      "source_ids": ["wiki_hound", "wiki_winter", "wiki_spear", "wiki_log_suit", "wiki_football_helmet"]
+    },
+    {
+      "id": "deerclops",
+      "name_zh": "鹿角怪",
+      "severity_for_newbie": "high",
+      "when": "冬季；靠近玩家出现，会有低沉叫声和角色台词提示。",
+      "failure_pattern": "在主基地附近等鹿角怪，导致锅、箱子、火坑周边结构被摧毁；或新手硬打导致死亡。",
+      "countermeasures": [
+        "听到提示后离开主基地，在基地外放临时火和便宜结构吸引目标",
+        "新手优先保基地和逃离，不把击杀当最低目标",
+        "若要打，需要护甲、武器、食物、理智回复和走位能力"
+      ],
+      "source_ids": ["wiki_deerclops", "wiki_winter"]
+    },
+    {
+      "id": "pengulls",
+      "name_zh": "企鹅群",
+      "severity_for_newbie": "medium",
+      "when": "冬季海岸附近成群出现。",
+      "failure_pattern": "攻击单只企鹅引发整群仇恨，被围殴。",
+      "countermeasures": ["不要主动攻击整群企鹅", "可把猎犬引到企鹅附近借力，但新手需保持距离", "不要把基地贴海岸建得太近"],
+      "source_ids": ["wiki_pengull", "wiki_winter"]
+    },
+    {
+      "id": "food_gap",
+      "name_zh": "断粮",
+      "severity_for_newbie": "high",
+      "when": "冬前没有锅/陷阱/肉干/稳定食物时，入冬后植物再生减慢并且池塘冻结。",
+      "failure_pattern": "秋天只靠地上萝卜浆果活着，冬天发现资源不再刷新。",
+      "countermeasures": ["锅", "陷阱抓兔子", "肉丸", "肉干/小肉干", "冰箱可选", "冬前采集草树枝和燃料"],
+      "source_ids": ["wiki_winter", "wiki_crock_pot", "wiki_trap", "wiki_drying_rack", "wiki_meatballs"]
+    },
+    {
+      "id": "darkness_and_sanity",
+      "name_zh": "长夜与理智下降",
+      "severity_for_newbie": "medium",
+      "when": "冬季黄昏/夜晚更长，移动光源不足或理智恢复不足时。",
+      "failure_pattern": "火把不足被黑暗攻击；长夜低理智引出影怪，叠加冻伤/饥饿死亡。",
+      "countermeasures": ["火坑", "至少 2-3 根备用火把或材料", "冬帽/小肉干/肉干", "晚上优先烤火整理，不强行远行"],
+      "source_ids": ["wiki_day_night", "wiki_winter", "wiki_torch", "wiki_morsel", "wiki_meat"]
+    }
+  ],
+  "safe_minimum_inventory_targets": {
+    "description": "面向默认角色、默认世界、不开控制台的保守首冬最低目标。不是数学最优，只是让新手显著提高过冬概率。",
+    "before_day_15": [
+      "科学机器",
+      "火坑",
+      "长矛",
+      "木甲",
+      "锅",
+      "至少定位草原/兔子洞或牛群"
+    ],
+    "before_day_20": [
+      "暖石",
+      "兔耳罩或冬帽二选一；有能力则冬帽更稳",
+      "6-8 个陷阱或等价稳定食物来源",
+      "至少 2-4 个晾肉架或可替代的存粮方式",
+      "木头、草、树枝、石头、燧石的冬季备用量",
+      "至少 1 套护甲和 1 把武器",
+      "备用火把或可立即做火把的材料"
+    ],
+    "nice_to_have": [
+      "冰箱",
+      "足球头盔",
+      "更多晾肉架",
+      "牛帽",
+      "鸟笼和蛋循环",
+      "额外暖石"
+    ]
+  }
+}
