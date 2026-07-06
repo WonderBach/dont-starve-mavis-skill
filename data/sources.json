@@ -1,0 +1,253 @@
+{
+  "database": "dont_starve_seasonal_survival",
+  "retrieved_at": "2026-07-05",
+  "primary_source_policy": "Prefer dontstarve.wiki.gg pages. Use page-specific facts over general guides. Keep vanilla DS, single-player RoG, and DST differences explicit.",
+  "sources": [
+    {
+      "id": "wiki_rog",
+      "title": "Don't Starve: Reign of Giants",
+      "url": "https://dontstarve.wiki.gg/wiki/Don%27t_Starve:_Reign_of_Giants",
+      "used_for": ["RoG is DLC/expansion content", "RoG can be toggled in new game", "RoG adds seasons/content"]
+    },
+    {
+      "id": "wiki_autumn",
+      "title": "Seasons/Autumn",
+      "url": "https://dontstarve.wiki.gg/wiki/Seasons/Autumn",
+      "used_for": ["Autumn is RoG/DST content", "Autumn lasts 20 days by default", "Autumn can be a starting season and leads to Winter"]
+    },
+    {
+      "id": "wiki_spring",
+      "title": "Seasons/Spring",
+      "url": "https://dontstarve.wiki.gg/wiki/Seasons/Spring",
+      "used_for": ["Spring is RoG/DST content", "Spring lasts 20 days by default", "Spring can be starting season", "frequent rain, wetness, lightning, frog rain, rabbit holes close, beefalo mating"]
+    },
+    {
+      "id": "wiki_summer",
+      "title": "Seasons/Summer",
+      "url": "https://dontstarve.wiki.gg/wiki/Seasons/Summer",
+      "used_for": ["Summer season facts", "RoG summer lasts 16 days by default", "overheating, wildfires, faster spoilage, plant wilting, Dragonfly risk"]
+    },
+    {
+      "id": "wiki_winter",
+      "title": "Seasons/Winter",
+      "url": "https://dontstarve.wiki.gg/wiki/Seasons/Winter",
+      "used_for": ["Winter length and first winter timing", "winter environmental changes", "single-player vs DST winter length", "winter food/resource changes"]
+    },
+    {
+      "id": "wiki_day_night",
+      "title": "Day-Night Cycle",
+      "url": "https://dontstarve.wiki.gg/wiki/Day-Night_Cycle",
+      "used_for": ["8 real-time minutes per day", "16 clock segments", "winter dusk/night are longer"]
+    },
+    {
+      "id": "wiki_freezing",
+      "title": "Freezing",
+      "url": "https://dontstarve.wiki.gg/wiki/Freezing",
+      "used_for": ["freezing threshold", "freezing damage", "insulation logic", "warm clothing tiers"]
+    },
+    {
+      "id": "wiki_overheating",
+      "title": "Overheating",
+      "url": "https://dontstarve.wiki.gg/wiki/Overheating",
+      "used_for": ["overheating warning thresholds", "overheating damage", "cooling sources", "thermal stone cooling", "shade and insulation"]
+    },
+    {
+      "id": "wiki_wetness",
+      "title": "Wetness",
+      "url": "https://dontstarve.wiki.gg/wiki/Wetness",
+      "used_for": ["wetness meter", "wetness threshold effects", "freezing from wetness", "wet items, fuel efficiency, waterproof gear"]
+    },
+    {
+      "id": "wiki_rain",
+      "title": "Rain",
+      "url": "https://dontstarve.wiki.gg/wiki/Rain",
+      "used_for": ["rain as wetness source", "sanity and lightning context", "spring rain context"]
+    },
+    {
+      "id": "wiki_lightning",
+      "title": "Lightning",
+      "url": "https://dontstarve.wiki.gg/wiki/Lightning",
+      "used_for": ["spring lightning risk", "lightning damage/fire risk", "lightning rod planning"]
+    },
+    {
+      "id": "wiki_thermal_stone",
+      "title": "Thermal Stone",
+      "url": "https://dontstarve.wiki.gg/wiki/Thermal_Stone",
+      "used_for": ["thermal stone recipe", "mechanics", "spawn code"]
+    },
+    {
+      "id": "wiki_campfire",
+      "title": "Campfire",
+      "url": "https://dontstarve.wiki.gg/wiki/Campfire",
+      "used_for": ["campfire and fire pit recipes", "fire pit persistence", "winter heat"]
+    },
+    {
+      "id": "wiki_torch",
+      "title": "Torch",
+      "url": "https://dontstarve.wiki.gg/wiki/Torch",
+      "used_for": ["torch recipe", "duration", "portable light", "RoG no-warmth note"]
+    },
+    {
+      "id": "wiki_science_machine",
+      "title": "Science Machine",
+      "url": "https://dontstarve.wiki.gg/wiki/Science_Machine",
+      "used_for": ["science machine recipe", "tier 1 station"]
+    },
+    {
+      "id": "wiki_alchemy_engine",
+      "title": "Alchemy Engine",
+      "url": "https://dontstarve.wiki.gg/wiki/Alchemy_Engine",
+      "used_for": ["alchemy engine recipe", "tier 2 station", "DLC recipe difference"]
+    },
+    {
+      "id": "wiki_refined_materials",
+      "title": "Boards, Cut Stone, Rope, Electrical Doodad",
+      "url": "https://dontstarve.wiki.gg/wiki/Boards",
+      "used_for": ["refined material recipes used in first-winter prep"]
+    },
+    {
+      "id": "wiki_crock_pot",
+      "title": "Crock Pot",
+      "url": "https://dontstarve.wiki.gg/wiki/Crock_Pot",
+      "used_for": ["crock pot recipe", "4-slot cooking", "spoilage behavior"]
+    },
+    {
+      "id": "wiki_ice_box",
+      "title": "Ice Box",
+      "url": "https://dontstarve.wiki.gg/wiki/Ice_Box",
+      "used_for": ["ice box recipe", "food spoilage reduced by 50%", "DLC recipe difference"]
+    },
+    {
+      "id": "wiki_drying_rack",
+      "title": "Drying Rack",
+      "url": "https://dontstarve.wiki.gg/wiki/Drying_Rack",
+      "used_for": ["drying rack recipe", "drying times", "winter meat storage"]
+    },
+    {
+      "id": "wiki_trap",
+      "title": "Trap",
+      "url": "https://dontstarve.wiki.gg/wiki/Trap",
+      "used_for": ["trap recipe", "rabbit trapping", "winter usefulness"]
+    },
+    {
+      "id": "wiki_rabbit",
+      "title": "Rabbit",
+      "url": "https://dontstarve.wiki.gg/wiki/Rabbit",
+      "used_for": ["rabbit winter behavior", "morsel drop", "trap strategy"]
+    },
+    {
+      "id": "wiki_rabbit_earmuffs",
+      "title": "Rabbit Earmuffs",
+      "url": "https://dontstarve.wiki.gg/wiki/Rabbit_Earmuffs",
+      "used_for": ["rabbit earmuffs recipe", "insulation"]
+    },
+    {
+      "id": "wiki_winter_hat",
+      "title": "Winter Hat",
+      "url": "https://dontstarve.wiki.gg/wiki/Winter_Hat",
+      "used_for": ["winter hat recipe", "insulation", "sanity restoration"]
+    },
+    {
+      "id": "wiki_beefalo_hat",
+      "title": "Beefalo Hat",
+      "url": "https://dontstarve.wiki.gg/wiki/Beefalo_Hat",
+      "used_for": ["beefalo hat recipe", "insulation"]
+    },
+    {
+      "id": "wiki_meatballs",
+      "title": "Meatballs",
+      "url": "https://dontstarve.wiki.gg/wiki/Meatballs",
+      "used_for": ["meatballs recipe and stats"]
+    },
+    {
+      "id": "wiki_pierogi",
+      "title": "Pierogi",
+      "url": "https://dontstarve.wiki.gg/wiki/Pierogi",
+      "used_for": ["pierogi recipe and stats"]
+    },
+    {
+      "id": "wiki_meat",
+      "title": "Meat",
+      "url": "https://dontstarve.wiki.gg/wiki/Meat",
+      "used_for": ["meat and jerky stats"]
+    },
+    {
+      "id": "wiki_morsel",
+      "title": "Morsel",
+      "url": "https://dontstarve.wiki.gg/wiki/Morsel",
+      "used_for": ["morsel and small jerky stats"]
+    },
+    {
+      "id": "wiki_spear",
+      "title": "Spear",
+      "url": "https://dontstarve.wiki.gg/wiki/Spear",
+      "used_for": ["spear recipe and damage"]
+    },
+    {
+      "id": "wiki_log_suit",
+      "title": "Log Suit",
+      "url": "https://dontstarve.wiki.gg/wiki/Log_Suit",
+      "used_for": ["log suit recipe and armor absorption"]
+    },
+    {
+      "id": "wiki_football_helmet",
+      "title": "Football Helmet",
+      "url": "https://dontstarve.wiki.gg/wiki/Football_Helmet",
+      "used_for": ["football helmet recipe and armor absorption"]
+    },
+    {
+      "id": "wiki_hound",
+      "title": "Hound",
+      "url": "https://dontstarve.wiki.gg/wiki/Hound",
+      "used_for": ["hound attack timing", "winter blue hounds", "new-player hound advice"]
+    },
+    {
+      "id": "wiki_deerclops",
+      "title": "Deerclops",
+      "url": "https://dontstarve.wiki.gg/wiki/Deerclops",
+      "used_for": ["Deerclops winter threat", "structure targeting", "RoG freezing attacks"]
+    },
+    {
+      "id": "wiki_pengull",
+      "title": "Pengull",
+      "url": "https://dontstarve.wiki.gg/wiki/Pengull",
+      "used_for": ["Pengull winter behavior", "risk of attacking flocks", "ice around breeding grounds in RoG"]
+    },
+    {
+      "id": "wiki_console_commands",
+      "title": "Console/Commands",
+      "url": "https://dontstarve.wiki.gg/wiki/Console/Commands",
+      "used_for": ["single-player console syntax", "c_give", "c_spawn", "stat commands"]
+    },
+    {
+      "id": "wiki_prefab_list",
+      "title": "Console/Prefab List",
+      "url": "https://dontstarve.wiki.gg/wiki/Console/Prefab_List",
+      "used_for": ["prefab names", "c_spawn vs c_give distinction"]
+    },
+    {
+      "id": "wiki_morgue",
+      "title": "Morgue",
+      "url": "https://dontstarve.wiki.gg/wiki/Morgue",
+      "used_for": ["morgue columns", "days lived semantics", "Darkness/Charlie and Shenanigans notes"]
+    },
+    {
+      "id": "wiki_death",
+      "title": "Death",
+      "url": "https://dontstarve.wiki.gg/wiki/Death",
+      "used_for": ["general death causes", "freezing, hunger, Charlie, mob deaths"]
+    },
+    {
+      "id": "wiki_charlie",
+      "title": "Charlie",
+      "url": "https://dontstarve.wiki.gg/wiki/Charlie",
+      "used_for": ["darkness death cause", "Charlie special morgue label"]
+    },
+    {
+      "id": "wiki_shadow_creature",
+      "title": "Shadow Creature",
+      "url": "https://dontstarve.wiki.gg/wiki/Shadow_Creature",
+      "used_for": ["low sanity shadow creature behavior", "attack threshold", "Terrorbeak/Crawling Horror interpretation"]
+    }
+  ]
+}
