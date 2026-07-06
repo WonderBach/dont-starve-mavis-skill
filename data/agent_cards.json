@@ -1,0 +1,346 @@
+{
+  "database": "dont_starve_seasonal_survival",
+  "layer": "agent_interaction_and_assistance",
+  "last_updated": "2026-07-05",
+  "interaction_policy": {
+    "primary_entry": "app_agent_auto_detection_first",
+    "description": "用户触发 Skill 后，第一步默认让 App Agent 检测 Steam 和《饥荒》安装，并按单机/联机路径自动进入停尸房或讣告截图；检测或自动化失败后才请求用户上传截图。",
+    "manual_questions_are_fallback": true,
+    "fallback_when": [
+      "App Agent 不能自动操作，或产品环境没有授权自动操作。",
+      "未检测到 Steam。",
+      "Steam 中未检测到 Don't Starve 或 Don't Starve Together。",
+      "截图不是停尸房/死亡记录界面。",
+      "OCR 无法可靠读出生存天数或死因。",
+      "用户没有截图且不想手动进入游戏截图。",
+      "用户主动要求不要自动操作，只想手动咨询。"
+    ]
+  },
+  "entry_cards": [
+    {
+      "id": "auto_detection_status_card",
+      "title": "正在自动检测饥荒安装",
+      "selection_mode": "single",
+      "priority": "primary",
+      "options": [
+        {
+          "id": "auto_detection",
+          "label": "自动检测",
+          "maps_to_stage": "app_agent_auto_detection_first",
+          "agent_bias": "默认走这条：先检测 Steam，再检测 219740/322330，再按单机/联机路径截图。不要先问截图。"
+        },
+        {
+          "id": "upload_after_failure",
+          "label": "上传截图",
+          "maps_to_stage": "morgue_screenshot_upload_fallback",
+          "agent_bias": "仅在自动检测失败、非 Steam 版本或用户主动上传截图时使用。"
+        },
+        {
+          "id": "manual_fallback",
+          "label": "手动描述",
+          "maps_to_stage": "manual_state_diagnosis",
+          "agent_bias": "仅在没有自动化入口且用户也没有截图时，用当前天数/死因/症状做两轮兜底诊断。"
+        }
+      ]
+    },
+    {
+      "id": "stage_card",
+      "title": "你现在处于什么阶段？",
+      "priority": "fallback_only",
+      "selection_mode": "single",
+      "options": [
+        {
+          "id": "new_start",
+          "label": "刚开局，还在摸索",
+          "maps_to_stage": "unknown_entry_or_autumn_buildout",
+          "agent_bias": "先确认版本和当前季节；少讲复杂机制，给前 5-10 天基础清单。"
+        },
+        {
+          "id": "pre_season_transition",
+          "label": "快换季了，想提前准备",
+          "maps_to_stage": "pre_season_transition",
+          "agent_bias": "先判断下一个季节，再给 3-5 件最低准备。"
+        },
+        {
+          "id": "in_season_emergency",
+          "label": "已经进季节，正在应急",
+          "maps_to_stage": "in_season_emergency",
+          "agent_bias": "按当前季节先救命：冬季保暖、春季避雨/避雷、夏季降温/防火。"
+        },
+        {
+          "id": "repeated_season_death",
+          "label": "反复死在某个季节",
+          "maps_to_stage": "repeated_season_death",
+          "agent_bias": "结合停尸房死因和季节，把最后一击反推成断链。"
+        }
+      ]
+    },
+    {
+      "id": "intervention_card",
+      "title": "你希望 AI 帮到什么程度？",
+      "selection_mode": "single",
+      "options": [
+        {
+          "id": "guide_only",
+          "label": "只给攻略，自己来跑图收集",
+          "output_policy": "不主动展示控制台代码，只给路线、清单和优先级。"
+        },
+        {
+          "id": "item_codes",
+          "label": "给物资代码，快速补齐资源，探索还是自己探索",
+          "output_policy": "可展示 c_give/c_spawn 物资包；结构用 c_spawn，背包物品用 c_give。"
+        },
+        {
+          "id": "stat_codes",
+          "label": "修改人物属性代码，开挂躺平",
+          "output_policy": "可展示 c_sethealth/c_sethunger/c_setsanity、暂停饥饿或 god mode；仍保留最小物资建议。"
+        }
+      ]
+    }
+  ],
+  "dynamic_followup": {
+    "max_questions": 3,
+    "skip_when_user_already_provided_enough": true,
+    "primary_path": "用户触发后，先让 App Agent 检测 Steam 和游戏安装；检测失败后再请求用户上传停尸房/讣告截图；仍没有截图才问当前天数和死因。",
+    "do_not_ask_as_primary_inputs": ["当前血量多少", "当前饥饿多少", "当前 san 值多少"],
+    "why": "三维是实时结果，变化太快；四季规划更需要当前季节和链状态。",
+    "priority_order": [
+      {
+        "id": "auto_detect_steam_games",
+        "question": "我先自动检测 Steam 里的《饥荒》单机版和联机版，能找到就直接打开对应停尸房/讣告截图。",
+        "short_reason": "默认入口，不需要用户先准备截图。"
+      },
+      {
+        "id": "morgue_screenshot_upload",
+        "question": "我没检测到可自动操作的 Steam 版本。你可以上传停尸房/讣告截图，我继续读生存天数和死因。",
+        "short_reason": "自动检测失败后的第一兜底。"
+      },
+      {
+        "id": "current_day",
+        "question": "如果没有截图，你大概活到第几天？",
+        "short_reason": "仅在自动检测失败且用户没有截图时询问。"
+      },
+      {
+        "id": "current_season_or_symptom",
+        "question": "现在是什么季节，或者你看到的主要问题是什么：冷、下雨潮湿、过热、自燃、断粮、黑暗还是怪物？",
+        "short_reason": "先定位当季环境链。"
+      },
+      {
+        "id": "warmth_chain",
+        "question": "保暖链现在怎么样：有暖石、火坑、保暖衣，以及出门用的燃料/临时火源吗？",
+        "short_reason": "冬季或春初低温时判断冻死和出门采集失败风险。"
+      },
+      {
+        "id": "food_chain",
+        "question": "食物链现在怎么样：有锅、陷阱/兔子洞、稳定食物来源、存粮或晾肉架吗？",
+        "short_reason": "判断断粮以及被迫远行风险；春季兔子洞关闭、夏季腐烂加速时尤其重要。"
+      },
+      {
+        "id": "light_chain",
+        "question": "光源链现在怎么样：夜里靠火坑、火把，还是身上能随时做火把？",
+        "short_reason": "判断黑暗死、理智崩溃和夜间回不来风险。"
+      },
+      {
+        "id": "rain_or_cooling_chain",
+        "question": "如果是春天/夏天：你有雨具、避雷针、冷火、冷暖石、防暑装备或防火方案吗？",
+        "short_reason": "判断雨湿链、降温链和防火链是否闭合。"
+      }
+    ],
+    "example_compact_prompt": "我先自动检测 Steam 里的饥荒并尝试打开停尸房/讣告截图；如果没检测到，再请你上传截图；如果也没有截图，再问两轮问题兜底。"
+  },
+  "fixed_output_structure": [
+    {
+      "section_id": "current_biggest_risk",
+      "title": "当前最大季节风险",
+      "instruction": "用一句话说明最可能先断的是当季环境链、食物链、光源链、战斗链还是基地链，再解释它如何转化成血量/饥饿/理智崩溃。"
+    },
+    {
+      "section_id": "core_checklist",
+      "title": "核心准备清单",
+      "instruction": "按当前季节分组；冬季列保暖链，春季列雨湿链，夏季列降温/防火链，再补食物、光源、战斗和基地上下文。"
+    },
+    {
+      "section_id": "urgency",
+      "title": "时间紧迫度判断",
+      "instruction": "结合当前天数说明还来不来得及，并给优先级顺序。"
+    },
+    {
+      "section_id": "minimum_survival_plan",
+      "title": "最低保命方案",
+      "instruction": "给最简路径，不讲全玩法；快换季给准备路线，已入季给应急路线。"
+    },
+    {
+      "section_id": "optional_assistance",
+      "title": "可选援助",
+      "instruction": "首轮默认展示正常攻略路线和对应物资补救代码；不要直接展示可以修改游戏数值的更强代码。仅在用户明确追问“难度还是太高/想要改数值/想要更强代码”时，再展示属性或开挂代码，并提醒每条代码的影响。固定提示：我暂时不直接展示其他更强、可以直接修改游戏数值的代码。如果你觉得当前难度还是太高，确实需要的话，也可以再问我要；不过这类代码会明显影响游戏体验，建议想清楚后再问我哦～我会给你并提醒每条代码的影响。"
+    }
+  ],
+  "console_assistance": {
+    "source_ids": ["wiki_console_commands", "wiki_prefab_list"],
+    "single_player_setup": [
+      {
+        "label": "打开控制台",
+        "note": "游戏内按 ~；如果不可用，检查 settings.ini 中 ENABLECONSOLE。",
+        "command": null
+      },
+      {
+        "label": "单机命令初始化",
+        "note": "wiki 的单机命令页建议每次进入世界后先运行一次。",
+        "command": "RunScript(\"consolecommands\")"
+      }
+    ],
+    "important_safety_notes": [
+      "以下命令面向 Don't Starve 单机版及 DLC，不等同于 DST 远程控制台。",
+      "c_give 适合可放进背包的物品；建筑/结构请用 c_spawn 放在鼠标位置附近。",
+      "控制台会破坏原本的生存压力；产品首轮只展示与死因对应的物资补救代码，不直接展示修改游戏数值的更强代码。"
+    ],
+    "item_code_packs": [
+      {
+        "id": "minimum_winter_rescue_items",
+        "label": "最低首冬补救包：背包物资",
+        "use_case": "快入冬或已经入冬，但缺暖石、保暖、燃料、基础战斗。",
+        "commands": [
+          "c_give(\"heatrock\",1)",
+          "c_give(\"winterhat\",1)",
+          "c_give(\"torch\",3)",
+          "c_give(\"log\",40)",
+          "c_give(\"cutgrass\",40)",
+          "c_give(\"twigs\",40)",
+          "c_give(\"rocks\",40)",
+          "c_give(\"flint\",20)",
+          "c_give(\"spear\",1)",
+          "c_give(\"armorwood\",1)",
+          "c_give(\"footballhat\",1)",
+          "c_give(\"meatballs\",6)"
+        ],
+        "explain_to_user": "这包会明显降低首冬难度，但还保留自己走位、建基地和处理威胁的体验。"
+      },
+      {
+        "id": "materials_keep_crafting",
+        "label": "材料包：保留自己建造",
+        "use_case": "用户想快速补齐资源，但仍自己制作锅、暖石、火坑、装备。",
+        "commands": [
+          "c_give(\"log\",40)",
+          "c_give(\"cutgrass\",40)",
+          "c_give(\"twigs\",40)",
+          "c_give(\"rocks\",40)",
+          "c_give(\"flint\",20)",
+          "c_give(\"goldnugget\",12)",
+          "c_give(\"charcoal\",12)",
+          "c_give(\"silk\",8)",
+          "c_give(\"beefalowool\",8)",
+          "c_give(\"pigskin\",2)",
+          "c_give(\"gears\",1)"
+        ],
+        "explain_to_user": "这包不会直接给建筑，适合仍想体验首冬准备流程的玩家。"
+      },
+      {
+        "id": "base_structures",
+        "label": "基地结构补齐包",
+        "use_case": "用户已经错过建设窗口，需要快速放置火坑、锅、冰箱、晾肉架。",
+        "commands": [
+          "c_spawn(\"firepit\",1)",
+          "c_spawn(\"cookpot\",1)",
+          "c_spawn(\"icebox\",1)",
+          "c_spawn(\"meatrack\",1)",
+          "c_spawn(\"meatrack\",1)",
+          "c_spawn(\"meatrack\",1)",
+          "c_spawn(\"meatrack\",1)"
+        ],
+        "explain_to_user": "结构会生成在鼠标位置附近；建议放在主基地开阔处，别贴着海岸或密集树林。"
+      },
+      {
+        "id": "warmth_only",
+        "label": "只补保暖",
+        "use_case": "用户食物还行，但马上被冻死。",
+        "commands": [
+          "c_give(\"heatrock\",1)",
+          "c_give(\"winterhat\",1)",
+          "c_give(\"earmuffshat\",1)",
+          "c_give(\"torch\",3)",
+          "c_give(\"log\",20)",
+          "c_give(\"cutgrass\",20)",
+          "c_give(\"twigs\",20)"
+        ],
+        "explain_to_user": "这包只解决冻死和黑夜，食物仍要靠锅、陷阱或存粮。"
+      },
+      {
+        "id": "food_only",
+        "label": "只补食物续航",
+        "use_case": "用户保暖成型，但快断粮。",
+        "commands": [
+          "c_give(\"trap\",8)",
+          "c_give(\"meatballs\",8)",
+          "c_give(\"smallmeat_dried\",8)",
+          "c_give(\"meat_dried\",4)",
+          "c_spawn(\"cookpot\",1)",
+          "c_spawn(\"meatrack\",1)",
+          "c_spawn(\"meatrack\",1)",
+          "c_spawn(\"meatrack\",1)",
+          "c_spawn(\"meatrack\",1)"
+        ],
+        "explain_to_user": "这包适合已经入冬但锅/陷阱/肉干体系没成型的情况。"
+      }
+    ],
+    "stat_code_packs": [
+      {
+        "id": "strong_code_disclosure_policy",
+        "label": "更强代码披露策略",
+        "show_in_first_response": false,
+        "trigger": "用户明确追问难度仍太高、想改游戏数值、想要更强代码或开挂代码。",
+        "required_warning": "我暂时不直接展示其他更强、可以直接修改游戏数值的代码。如果你觉得当前难度还是太高，确实需要的话，也可以再问我要；不过这类代码会明显影响游戏体验，建议想清楚后再问我哦～我会给你并提醒每条代码的影响。"
+      },
+      {
+        "id": "restore_stats",
+        "label": "拉满当前三维",
+        "commands": [
+          "c_sethealth(1)",
+          "c_sethunger(1)",
+          "c_setsanity(1)"
+        ],
+        "explain_to_user": "把生命、饥饿、理智恢复到 100%；不会自动解决冻伤环境。"
+      },
+      {
+        "id": "pause_hunger",
+        "label": "暂停饥饿",
+        "commands": [
+          "GetPlayer().components.hunger:Pause(true)"
+        ],
+        "explain_to_user": "饥饿不会再下降，但冻结和战斗仍可能杀死你。"
+      },
+      {
+        "id": "god_mode",
+        "label": "无敌/超级无敌",
+        "commands": [
+          "c_godmode()",
+          "c_supergodmode()"
+        ],
+        "explain_to_user": "这是直接开挂层级；穿洞、睡觉、换世界等操作后可能需要重新开启。"
+      }
+    ]
+  },
+  "response_examples": [
+    {
+      "id": "prewinter_guide_example",
+      "input_summary": "第 17 天，有火坑和科学机器，没有二本、暖石、锅。",
+      "output_skeleton": {
+        "当前最大风险": "不是立刻饿死，而是第 21 天后没有暖石，活动半径被冻伤压死。",
+        "核心准备清单": ["二本 -> 暖石", "火坑 + 木头", "锅或陷阱", "长矛木甲"],
+        "时间紧迫度判断": "还来得及，但不要继续远图探索；按暖石、锅、燃料、护甲排序。",
+        "最低保命方案": ["今天找金/石头补二本", "做暖石", "做兔耳罩或冬帽", "做锅和陷阱", "第 20 天前回基地整理燃料"],
+        "可选援助": "纯攻略模式下不展示代码。"
+      }
+    },
+    {
+      "id": "winter_item_code_example",
+      "input_summary": "第 23 天，已入冬，没有暖石，用户选择物资代码。",
+      "output_skeleton": {
+        "当前最大风险": "冻死是最高风险；先补暖石和燃料。",
+        "核心准备清单": ["暖石", "冬帽", "火把", "木头草树枝", "肉丸", "木甲长矛"],
+        "时间紧迫度判断": "已经过了准备窗口，按应急处理。",
+        "最低保命方案": ["回火源", "运行保暖补救包", "围绕火坑短距离行动", "用食物包接上续航"],
+        "可选援助": "展示 minimum_winter_rescue_items。"
+      }
+    }
+  ]
+}
