@@ -10,7 +10,7 @@
     "material_source_guidance_first": "用户触发 Skill 后，如果当前缺少死亡记录、截图或局内信息，第一轮先让用户选择材料来源：上传截图、文字描述，或可选自动获取。",
     "auto_fetch_trigger_condition": "只有用户明确选择“尝试自动获取死亡记录”，或明确表达“帮我打开游戏 / 帮我进停尸房 / 帮我获取死亡记录 / 自动帮我找记录”时，才启动 App Agent。",
     "screenshot_analysis_path": "用户上传停尸房/讣告/死亡结算截图后，进入 OCR / 视觉识别，再做死亡复盘。",
-    "manual_diagnosis_path": "用户直接描述死亡情况时，最多两轮关键补问，基于天数、死因、缺资源和季节症状做诊断。",
+    "manual_diagnosis_path": "用户选择「做几道选择题」时，走卡片式选择题诊断：季节(单选)、数值(多选)、卡点(多选)三张卡片点选后汇总成画像做诊断，不做自由文字长问卷；仅在选择冲突或都说不清时补问一句。",
     "auto_fetch_path": "用户明确选择自动获取后，App Agent 检测 Steam 和游戏安装，尝试获取死亡记录截图；成功后回到截图分析，失败后回到取材料引导。",
     "max_followup_after_screenshot": 1,
     "allowed_followup_after_screenshot": [
@@ -88,7 +88,7 @@
         "图片是物品栏/地图/角色面板，不能直接读取最终死因"
       ],
       "action_if_positive": "进入 OCR 字段抽取。",
-      "action_if_negative": "改用普通状态诊断，询问当前天数和三条链状态。"
+      "action_if_negative": "回到取材料引导，或改用卡片式选择题诊断（季节/数值/卡点）。"
     },
     {
       "step": "image_ocr",
@@ -344,22 +344,22 @@
       "recommended_fix": ["春季前在基地建避雷针", "雨天少站在危险区域", "保护核心建筑和可燃资源"]
     },
     {
-      "match_any": ["hound", "blue hound", "ice hound", "icehound"],
-      "direct_label_zh": "猎犬/蓝猎犬击杀",
-      "root_chain": "context_combat_and_accidents",
-      "secondary_chains": ["warmth_chain", "light_chain"],
+      "match_any": ["hound", "blue hound", "ice hound", "icehound", "red hound", "fire hound", "firehound"],
+      "direct_label_zh": "猎犬击杀（含蓝/冰猎犬、红/火猎犬）",
+      "root_chain": "combat_safety_chain",
+      "secondary_chains": ["warmth_chain", "light_chain", "cooling_chain"],
       "confidence": "medium",
-      "interpretation": "准备不足导致的意外死亡：最终死因是战斗，但根因多半是没有护甲武器、处理地点不对，或在冻伤、过热、雨天、黑夜、远离基地时被猎犬追上。",
+      "interpretation": "准备不足导致的意外死亡：最终死因是战斗，但根因多半是没有护甲武器、处理地点不对，或在冻伤、过热、雨天、黑夜、远离基地时被猎犬追上。冬季多为蓝/冰猎犬（死后冰冻减速），夏季多为红/火猎犬（死后引燃周围，别在可燃物旁打）。",
       "followup_questions": [
         "死亡时你有木甲/足球头盔和长矛吗？",
         "猎犬来时是在主基地、夜晚，还是外出采集路上？"
       ],
-      "recommended_fix": ["第 10 天前做长矛和木甲", "猎犬来时离开主基地到开阔地", "可引到牛群/蜘蛛/企鹅", "冬季听到猎犬声先穿甲和回温"]
+      "recommended_fix": ["第 10 天前做长矛和木甲", "猎犬来时离开主基地到开阔地", "可引到牛群/蜘蛛/企鹅", "冬季听到猎犬声先穿甲和回温", "夏季红猎犬别在基地或可燃物旁打，避免连锁起火"]
     },
     {
       "match_any": ["deerclops"],
       "direct_label_zh": "鹿角怪击杀",
-      "root_chain": "context_base_and_accidents",
+      "root_chain": "base_safety_chain",
       "secondary_chains": ["warmth_chain", "light_chain"],
       "confidence": "high",
       "interpretation": "准备不足导致的意外死亡：新手最低目标不是击杀鹿角怪，而是听到提示后把它引离主基地，保住火源、锅和存粮。",
@@ -370,9 +370,22 @@
       "recommended_fix": ["听到巨兽提示后离开主基地", "带暖石和燃料去基地外", "不要把击杀鹿角怪当首冬最低目标", "基地核心建筑不要过密"]
     },
     {
-      "match_any": ["pig", "pig man", "tentacle", "spider", "beefalo", "killer bee", "pengull", "penguin"],
+      "match_any": ["dragonfly"],
+      "direct_label_zh": "龙蝇击杀",
+      "root_chain": "combat_safety_chain",
+      "secondary_chains": ["fireproof_base_chain", "cooling_chain"],
+      "confidence": "medium",
+      "interpretation": "夏季高危战斗/火灾事故：龙蝇是夏季沙漠的高血量目标，会点燃周围可燃物、狂暴后召唤火焰幼虫。对新手来说通常不是必须击杀的目标，硬刚容易引发连锁火灾和过热死亡。",
+      "followup_questions": [
+        "你是主动去打龙蝇，还是路过被它盯上？",
+        "交战地点离主基地和可燃物远不远？"
+      ],
+      "recommended_fix": ["新手夏季不要主动接近龙蝇", "绝不把它带回主基地或可燃区", "优先处理降温和基地防火", "路线规划绕开高危沙漠区"]
+    },
+    {
+      "match_any": ["pig", "pig man", "tentacle", "spider", "beefalo", "killer bee", "bee", "pengull", "penguin", "mosquito"],
       "direct_label_zh": "普通生物/中立生物击杀",
-      "root_chain": "context_combat_and_accidents",
+      "root_chain": "combat_safety_chain",
       "confidence": "medium",
       "interpretation": "多半是探索/采集/战斗决策问题。若 days_lived 在 15-36，要继续检查为什么必须冒这个险：食物链不足、保暖链限制、或夜间赶路。",
       "followup_questions": [

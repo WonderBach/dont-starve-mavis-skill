@@ -4,7 +4,9 @@
   "last_updated": "2026-07-05",
   "interaction_policy": {
     "primary_entry": "material_source_guidance_first",
-    "description": "用户提出想在《饥荒》中活得更久但没有提供死亡记录或局内信息时，先引导用户选择材料来源：上传停尸房/讣告/死亡结算截图、文字描述死亡情况，或在环境允许时尝试自动获取死亡记录。App Agent 只在用户明确选择自动获取或明确要求打开游戏/进入停尸房/获取死亡记录时启动。",
+    "description": "用户提出想在《饥荒》中活得更久但没有提供死亡记录或局内信息时，第一轮不要直接分析，也不要分析角色，而是给出三张可点击卡片让用户选择材料来源：①上传停尸房/讣告/死亡结算截图；②做几道选择题（季节/数值/卡点，卡片式点选，不是自由文字问答）；③在环境允许时尝试自动获取死亡记录。App Agent 只在用户明确选择自动获取或明确要求打开游戏/进入停尸房/获取死亡记录时启动。",
+    "render_as_cards": true,
+    "card_interaction_note": "开场三选一和选择题诊断都以卡片形式呈现，用户点击即可，不需要打字；只有需要补充的细节才用一句话追问。",
     "manual_questions_are_fallback": false,
     "fallback_when": [
       "用户选择自动获取但 App Agent 不能操作，或产品环境没有授权自动操作。",
@@ -19,61 +21,89 @@
   "entry_cards": [
     {
       "id": "material_source_card",
-      "title": "先选择一种复盘材料",
+      "title": "老板，想帮你活得更久，先选一种复盘方式（点一下就行）",
       "selection_mode": "single",
       "priority": "primary",
+      "render_as_cards": true,
       "options": [
         {
           "id": "upload_death_record_screenshot",
-          "label": "上传死亡记录截图",
+          "label": "📷 上传死亡截图，我帮你验尸",
+          "desc": "把停尸房 / 讣告 / 死亡结算截图丢给我，我直接读出你活了几天、死因是什么，复盘最准。",
           "maps_to_stage": "morgue_screenshot_analysis",
-          "agent_bias": "用户上传停尸房/讣告/死亡结算截图后，进入 OCR / 视觉识别，再做死亡复盘。"
+          "agent_bias": "用户上传停尸房/讣告/死亡结算截图后，进入 OCR / 视觉识别，再做死亡复盘。不分析角色/头像。"
         },
         {
-          "id": "text_description_diagnosis",
-          "label": "文字描述死亡情况",
-          "maps_to_stage": "manual_state_diagnosis",
-          "agent_bias": "用户直接描述第几天、怎么死、当时缺什么资源；最多两轮关键补问后进入根因链诊断。"
+          "id": "choice_based_diagnosis",
+          "label": "📝 做几道选择题，我帮你复盘",
+          "desc": "不想截图也行，点几下告诉我卡在哪个季节、哪个数值保不住、最难的是哪一步，我照样帮你诊断。",
+          "maps_to_stage": "choice_based_diagnosis",
+          "agent_bias": "进入卡片式选择题诊断：依次给出季节卡、数值卡、卡点卡，用户点选后汇总成一份画像再分析，不做自由文字长问卷。"
         },
         {
           "id": "optional_auto_fetch",
-          "label": "尝试自动获取死亡记录",
+          "label": "🎮 让我自动去翻你的死亡记录",
+          "desc": "我可以试着自己打开游戏、翻出停尸房截图——但只支持 Steam 版，还得请老板配合、耐心等自动化跑完，也有一定概率翻车；万一失败，随时能退回截图或选择题。",
           "maps_to_stage": "app_agent_optional_death_record_fetch",
-          "agent_bias": "仅在用户明确选择时使用。先检测环境和 Steam 游戏安装，成功拿到截图后回到截图分析；任一环节失败则回到本取材料引导。"
+          "agent_bias": "仅在用户明确选择时使用。仅支持 Steam 版《饥荒》，需用户在场配合并等待自动化完成，可能失败。先检测环境和 Steam 游戏安装，成功拿到截图后回到截图分析；任一环节失败则回到本取材料引导（截图或选择题）。"
         }
-      ]
+      ],
+      "footnote": "（小声：我这套复盘主要覆盖《饥荒》经典版的四季生存，DLC 和联机版特殊活动…小马暂时还没吃透哈~）",
+      "footnote_style": "small_print",
+      "footnote_rule": "在三张卡片下方固定附这行小字版本声明，说明覆盖范围是《饥荒》经典版四季，不含 DLC 与联机版特殊活动；保持 Mavis 口吻，不要展开长段免责。"
     },
     {
-      "id": "stage_card",
-      "title": "你现在处于什么阶段？",
-      "priority": "fallback_only",
-      "selection_mode": "single",
-      "options": [
+      "id": "choice_diagnosis_cards",
+      "title": "选择题诊断（选完自动汇总分析）",
+      "priority": "option2_choice_based_diagnosis",
+      "usage": "用户在开场选择「做几道选择题」，或截图/自动获取失败后退回时使用。依次呈现下面三张卡片，用户点选后汇总成画像再分析；能少问就少问，任何一张卡都可选「说不清」跳过。",
+      "cards": [
         {
-          "id": "new_start",
-          "label": "刚开局，还在摸索",
-          "maps_to_stage": "unknown_entry_or_autumn_buildout",
-          "agent_bias": "先确认版本和当前季节；少讲复杂机制，给前 5-10 天基础清单。"
+          "id": "stuck_season_card",
+          "title": "你通常卡在哪个季节？",
+          "selection_mode": "single",
+          "options": [
+            {"id": "autumn", "label": "秋季（刚开局 / 建设期）", "maps_to_season": "autumn", "agent_bias": "多为建设窗口拖延、探图过远、没在入冬前搭好基础。"},
+            {"id": "winter", "label": "冬季（又冷又是长夜）", "maps_to_season": "winter", "agent_bias": "重点查保暖链、长夜光源链、食物断档、鹿角怪/蓝猎犬。"},
+            {"id": "spring", "label": "春季（一直下雨、潮乎乎）", "maps_to_season": "spring", "agent_bias": "重点查雨湿链、避雷、青蛙雨、潮湿掉理智、兔子洞关闭。"},
+            {"id": "summer", "label": "夏季（太热、东西自燃）", "maps_to_season": "summer", "agent_bias": "重点查降温链、防火链、食物加速腐烂。"},
+            {"id": "unsure_season", "label": "说不清 / 裸本体只有冬夏", "maps_to_season": "unknown", "agent_bias": "先按数值卡和卡点卡的症状判断，必要时补问一句版本或当前天数。"}
+          ]
         },
         {
-          "id": "pre_season_transition",
-          "label": "快换季了，想提前准备",
-          "maps_to_stage": "pre_season_transition",
-          "agent_bias": "先判断下一个季节，再给 3-5 件最低准备。"
+          "id": "unstable_stat_card",
+          "title": "哪个数值最保不住？（可多选）",
+          "selection_mode": "multi",
+          "options": [
+            {"id": "health", "label": "血量（红心一直掉）", "maps_to_chain": "result_of_other_break", "agent_bias": "血量掉多是结果不是根因，结合其他选项反推是被冻/被打/断粮/暗影。"},
+            {"id": "hunger", "label": "饱食度（老是饿）", "maps_to_chain": "food_chain", "agent_bias": "查锅、稳定食物路线、陷阱/存粮、当季食物来源变化。"},
+            {"id": "sanity", "label": "San 值 / 理智（脑子压不住）", "maps_to_chain": "light_chain", "agent_bias": "查光源、夜间行动边界、理智恢复食物、潮湿/黑暗压力。"},
+            {"id": "temperature", "label": "体温（太冷或太热）", "maps_to_chain": "warmth_or_cooling_chain", "agent_bias": "配合季节判断：冬/春初查保暖链，夏季查降温链。"},
+            {"id": "wetness", "label": "湿度（潮湿）", "maps_to_chain": "rain_wetness_chain", "agent_bias": "春季雨湿链：湿度拖垮体温、理智、工具与火源效率。"},
+            {"id": "unsure_stat", "label": "说不清 / 都还行", "maps_to_chain": "unknown", "agent_bias": "以季节卡和卡点卡为主判断。"}
+          ]
         },
         {
-          "id": "in_season_emergency",
-          "label": "已经进季节，正在应急",
-          "maps_to_stage": "in_season_emergency",
-          "agent_bias": "按当前季节先救命：冬季保暖、春季避雨/避雷、夏季降温/防火。"
-        },
-        {
-          "id": "repeated_season_death",
-          "label": "反复死在某个季节",
-          "maps_to_stage": "repeated_season_death",
-          "agent_bias": "结合停尸房死因和季节，把最后一击反推成断链。"
+          "id": "stuck_point_card",
+          "title": "最大的卡点是哪一类？（可多选）",
+          "selection_mode": "multi",
+          "wiki_note": "选项参考 wiki/社区对新手难点的强概括：资源储备→科技→防御→探索，以及食物、季节应对、理智管理、基地建设。",
+          "options": [
+            {"id": "resource_tech", "label": "物资收集难（总缺材料、工具/科技做不出来）", "maps_to_chain": "base_safety_chain", "agent_bias": "查采集路线、科学机器/二本、基础工具装备是否成型。"},
+            {"id": "food_supply", "label": "食物不够（不会用锅、断粮、食物腐烂）", "maps_to_chain": "food_chain", "agent_bias": "查锅、陷阱/肉丸/肉干路线、冰箱保鲜、当季食物变化。"},
+            {"id": "combat", "label": "战斗打不过（怪物、猎犬、巨人）", "maps_to_chain": "combat_safety_chain", "agent_bias": "查长矛木甲、处理地点、能否引到外部生物；多为被环境逼到危险状态。"},
+            {"id": "exploration", "label": "探索/找路难（迷路、找不到关键资源、天黑回不了家）", "maps_to_chain": "light_chain", "agent_bias": "查移动光源、夜间行动边界、基地选址与探图节奏。"},
+            {"id": "season_transition", "label": "换季就崩（一到某个季节就撑不住）", "maps_to_chain": "seasonal_environment_chain", "agent_bias": "结合季节卡，查过季准备链：入冬保暖、入春避雨、入夏降温防火。"},
+            {"id": "night_sanity", "label": "黑夜/理智撑不住（晚上乱、暗影生物、不敢出门）", "maps_to_chain": "light_chain", "agent_bias": "查固定与移动光源、理智恢复、低理智时是否先回安全区。"},
+            {"id": "unsure_stuck", "label": "说不清，就是活不久", "maps_to_chain": "unknown", "agent_bias": "综合季节卡和数值卡给最低保命方案，必要时补问一句最近一次怎么死的。"}
+          ]
         }
-      ]
+      ],
+      "aggregation_rule": {
+        "how": "把三张卡的选择汇总成一份画像：季节 → 锁定当季环境链；数值 → 指向先断的生存链（饱食度=食物链、San=光源/理智、体温=保暖或降温链、湿度=雨湿链、血量=结果）；卡点 → 指向被卡的能力线（资源/食物/战斗/探索/换季/黑夜）。",
+        "then": "取交集确定 1 条主断链 + 1-2 条次断链，再查 death_causes.json / seasonal_survival.json，套用 fixed_output_structure 输出：当前最大风险 → 核心清单 → 紧迫度 → 最低保命方案 → 可选援助。",
+        "conflict": "多选冲突或都选说不清时，以季节卡为主锚点，最多再补问一句（最近一次大概怎么死的 / 第几天），不要展开长问卷。"
+      }
     },
     {
       "id": "intervention_card",
@@ -101,57 +131,43 @@
   "dynamic_followup": {
     "max_questions": 3,
     "skip_when_user_already_provided_enough": true,
-    "primary_path": "用户触发后，先判断是否已经有截图或文字材料；没有材料时进入取材料引导。只有用户明确选择自动获取或明确要求打开游戏/进入停尸房/获取死亡记录时，才让 App Agent 检测环境并尝试获取死亡记录。",
-    "do_not_ask_as_primary_inputs": ["当前血量多少", "当前饥饿多少", "当前 san 值多少"],
-    "why": "三维是实时结果，变化太快；四季规划更需要当前季节和链状态。",
+    "interaction_style": "card_first",
+    "primary_path": "用户触发后，先判断是否已经有截图或局内信息；没有材料时给出开场三张卡片（截图 / 选择题 / 自动获取）。选「选择题」则进入 choice_diagnosis_cards 的卡片式点选（季节→数值→卡点），点完自动汇总分析，不做自由文字长问卷。只有用户明确选择自动获取或明确要求打开游戏/进入停尸房/获取死亡记录时，才让 App Agent 检测环境并尝试获取。",
+    "do_not_ask_as_primary_inputs": ["让用户手打一大段死亡经过", "逐条追问每条生存链状态"],
+    "why": "改为卡片点选后，用户不用打字；季节、数值、卡点三张卡足以拼出画像，追问只在冲突或说不清时补一句。",
     "priority_order": [
       {
         "id": "material_source_guidance",
-        "question": "想帮你在《饥荒》里活得更久，我需要先了解你通常在哪一步翻车。你可以上传死亡记录截图、直接描述死亡情况，或让我在环境允许时尝试自动获取死亡记录。",
-        "short_reason": "默认入口，先获取可分析材料。"
+        "question": "老板，想帮你在《饥荒》里活得更久，先选一种复盘方式（点一下就行）：📷 上传死亡截图我帮你验尸 / 📝 做几道选择题我帮你复盘 / 🎮 让我自动去翻你的死亡记录（仅 Steam 版、需配合等待、可能翻车）。",
+        "short_reason": "默认入口，三张卡片二选一或三选一。"
       },
       {
-        "id": "morgue_screenshot_upload",
-        "question": "如果你有停尸房/讣告/死亡结算截图，可以直接上传，我会读取生存天数和死因。",
-        "short_reason": "截图是最稳定的死亡复盘材料。"
+        "id": "choice_card_season",
+        "question": "（选择题第 1 张）你通常卡在哪个季节？秋 / 冬 / 春 / 夏 / 说不清。",
+        "short_reason": "锁定当季环境链，单选。"
       },
       {
-        "id": "current_day",
-        "question": "如果没有截图，你大概活到第几天？最后是冻死、饿死、黑暗、怪物、过热、火灾，还是别的情况？",
-        "short_reason": "文字问答诊断的第一轮关键材料。"
+        "id": "choice_card_stat",
+        "question": "（选择题第 2 张）哪个数值最保不住？血量 / 饱食度 / San 值 / 体温 / 湿度（可多选）。",
+        "short_reason": "指向先断的生存链，多选。"
+      },
+      {
+        "id": "choice_card_stuck_point",
+        "question": "（选择题第 3 张）最大的卡点是哪一类？物资收集 / 食物不够 / 战斗打不过 / 探索找路 / 换季就崩 / 黑夜理智 / 说不清（可多选）。",
+        "short_reason": "指向被卡的能力线，多选。"
       },
       {
         "id": "optional_auto_fetch",
-        "question": "如果你愿意，我也可以尝试自动获取死亡记录；这受电脑环境、游戏版本、分辨率和登录状态影响，失败后会回到截图上传或文字描述。",
+        "question": "如果你愿意，我也可以尝试自动获取死亡记录；仅支持 Steam 版，需要老板在场配合、等自动化跑完，有可能失败，失败后会回到截图或选择题。",
         "short_reason": "仅在用户选择后触发 App Agent。"
       },
       {
-        "id": "current_season_or_symptom",
-        "question": "现在是什么季节，或者你看到的主要问题是什么：冷、下雨潮湿、过热、自燃、断粮、黑暗还是怪物？",
-        "short_reason": "先定位当季环境链。"
-      },
-      {
-        "id": "warmth_chain",
-        "question": "保暖链现在怎么样：有暖石、火坑、保暖衣，以及出门用的燃料/临时火源吗？",
-        "short_reason": "冬季或春初低温时判断冻死和出门采集失败风险。"
-      },
-      {
-        "id": "food_chain",
-        "question": "食物链现在怎么样：有锅、陷阱/兔子洞、稳定食物来源、存粮或晾肉架吗？",
-        "short_reason": "判断断粮以及被迫远行风险；春季兔子洞关闭、夏季腐烂加速时尤其重要。"
-      },
-      {
-        "id": "light_chain",
-        "question": "光源链现在怎么样：夜里靠火坑、火把，还是身上能随时做火把？",
-        "short_reason": "判断黑暗死、理智崩溃和夜间回不来风险。"
-      },
-      {
-        "id": "rain_or_cooling_chain",
-        "question": "如果是春天/夏天：你有雨具、避雷针、冷火、冷暖石、防暑装备或防火方案吗？",
-        "short_reason": "判断雨湿链、降温链和防火链是否闭合。"
+        "id": "single_clarify_if_needed",
+        "question": "（仅在卡片选择冲突或都选说不清时补一句）最近一次大概第几天、怎么没的？",
+        "short_reason": "最多补问一句，不展开长问卷。"
       }
     ],
-    "example_compact_prompt": "想帮你活得更久，我需要先知道你通常怎么翻车。你可以上传死亡记录截图、直接描述死亡情况，或选择让我尝试自动获取死亡记录。"
+    "example_compact_prompt": "老板，想帮你活得更久，先点一张卡：截图验尸 / 做几道选择题 / 让我自动去翻记录（仅 Steam 版、可能翻车）。"
   },
   "fixed_output_structure": [
     {
@@ -285,6 +301,132 @@
           "c_spawn(\"meatrack\",1)"
         ],
         "explain_to_user": "这包适合已经入冬但锅/陷阱/肉干体系没成型的情况。"
+      },
+      {
+        "id": "light_and_fuel",
+        "label": "光源+燃料包：别再被黑暗结算",
+        "use_case": "死因是黑暗/Charlie，缺固定光源、移动光源或燃料。",
+        "commands": [
+          "c_give(\"minerhat\",1)",
+          "c_give(\"lantern\",1)",
+          "c_give(\"torch\",3)",
+          "c_give(\"log\",40)",
+          "c_give(\"cutgrass\",40)",
+          "c_give(\"twigs\",40)"
+        ],
+        "explain_to_user": "矿工帽/提灯解决移动光源，木头草树枝保证随时能补火把和火坑；夜晚仍不建议远行。"
+      },
+      {
+        "id": "sanity_and_light",
+        "label": "理智+光源包：压住暗影生物",
+        "use_case": "死因是暗影生物（terrorbeak/crawling horror），根因是光源和理智恢复不足。",
+        "commands": [
+          "c_give(\"tophat\",1)",
+          "c_give(\"smallmeat_dried\",8)",
+          "c_give(\"meat_dried\",4)",
+          "c_give(\"minerhat\",1)",
+          "c_give(\"torch\",3)",
+          "c_give(\"log\",20)"
+        ],
+        "explain_to_user": "高礼帽和肉干负责回理智，矿工帽/火把保证夜间光源；低理智时先回安全区恢复再行动。"
+      },
+      {
+        "id": "summer_cooling",
+        "label": "夏季降温包：别被过热扣血",
+        "use_case": "死因是过热（overheating），缺冷火、冷暖石、遮阴或防暑装备。",
+        "commands": [
+          "c_spawn(\"coldfirepit\",1)",
+          "c_give(\"heatrock\",1)",
+          "c_give(\"watermelonhat\",1)",
+          "c_give(\"grass_umbrella\",1)",
+          "c_give(\"ice\",20)"
+        ],
+        "explain_to_user": "吸热火坑+冷却暖石负责主动降温，西瓜帽/草伞减缓升温；中午少远行，优先找树荫或冷源。"
+      },
+      {
+        "id": "fireproof_base",
+        "label": "基地防火包：别被自燃烧光",
+        "use_case": "死因是火灾/燃烧，且发生在夏季或基地附近（自燃、误操作、火系战斗）。",
+        "commands": [
+          "c_give(\"extinguisher\",2)",
+          "c_give(\"ice\",40)"
+        ],
+        "explain_to_user": "灭火器和冰用来抢救起火的核心建筑；夏季核心区别贴密集可燃物，减少在基地附近引火战斗。"
+      },
+      {
+        "id": "spring_rain_safety",
+        "label": "春季雨湿+避战包",
+        "use_case": "死因是青蛙/青蛙雨，根因是雨季避战路线和防潮不足。",
+        "commands": [
+          "c_give(\"eyebrella\",1)",
+          "c_give(\"raincoat\",1)",
+          "c_give(\"spear\",1)",
+          "c_give(\"armorwood\",1)",
+          "c_give(\"footballhat\",1)"
+        ],
+        "explain_to_user": "眼球伞/雨衣压住潮湿掉理智，长矛木甲保底自保；青蛙雨优先跑位、引到牛群蜘蛛，别在狭窄基地硬打。"
+      },
+      {
+        "id": "lightning_rod_base",
+        "label": "避雷+防潮包",
+        "use_case": "死因是雷击，根因是缺避雷针、雨天暴露或可燃建筑没保护。",
+        "commands": [
+          "c_spawn(\"lightningrod\",1)",
+          "c_give(\"eyebrella\",1)",
+          "c_give(\"raincoat\",1)"
+        ],
+        "explain_to_user": "避雷针放在基地核心把雷引走；雨天少站在可燃建筑和空旷危险区旁边。"
+      },
+      {
+        "id": "basic_combat",
+        "label": "基础战斗包：扛住猎犬",
+        "use_case": "死因是猎犬（含蓝/冰猎犬、红/火猎犬），缺护甲武器或在环境劣势下被追上。",
+        "commands": [
+          "c_give(\"spear\",2)",
+          "c_give(\"armorwood\",2)",
+          "c_give(\"footballhat\",2)",
+          "c_give(\"log\",20)",
+          "c_give(\"healingsalve\",3)"
+        ],
+        "explain_to_user": "长矛木甲头盔是基础战斗三件套；猎犬来时离开主基地到开阔地，可引到牛群/蜘蛛。夏季红猎犬死后会引燃，别在可燃物旁打。"
+      },
+      {
+        "id": "winter_boss_escape",
+        "label": "鹿角怪撤离包",
+        "use_case": "死因是鹿角怪，重点不是击杀而是把它引离主基地保住火源/锅/存粮。",
+        "commands": [
+          "c_spawn(\"firepit\",1)",
+          "c_give(\"heatrock\",1)",
+          "c_give(\"torch\",3)",
+          "c_give(\"log\",40)",
+          "c_give(\"cutgrass\",20)"
+        ],
+        "explain_to_user": "在基地外准备临时火坑+暖石+燃料，听到巨兽提示后把鹿角怪引开，别在主基地硬等。"
+      },
+      {
+        "id": "summer_escape",
+        "label": "夏季龙蝇避战包",
+        "use_case": "死因是龙蝇（dragonfly），新手重点是躲避和保护基地，不必硬刚。",
+        "commands": [
+          "c_give(\"heatrock\",1)",
+          "c_give(\"watermelonhat\",1)",
+          "c_give(\"ice\",20)",
+          "c_give(\"extinguisher\",1)"
+        ],
+        "explain_to_user": "龙蝇会点燃周围并召唤火焰幼虫，新手别主动接近、更别带回基地；这包保降温+应急灭火，路线规划直接绕开高危沙漠区。"
+      },
+      {
+        "id": "basic_combat_or_food",
+        "label": "战斗+食物混合包",
+        "use_case": "死因是普通/中立生物（猪、蜘蛛、触手、牛、蜂等），多为断粮或夜间赶路被迫冒险。",
+        "commands": [
+          "c_give(\"spear\",1)",
+          "c_give(\"armorwood\",1)",
+          "c_give(\"footballhat\",1)",
+          "c_give(\"trap\",6)",
+          "c_give(\"meatballs\",6)"
+        ],
+        "explain_to_user": "先用陷阱+肉丸补上食物断档，减少被迫远行；护甲长矛保底，采集路线尽量靠近基地和安全点。"
       }
     ],
     "stat_code_packs": [
