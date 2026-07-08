@@ -3,43 +3,43 @@
   "layer": "agent_interaction_and_assistance",
   "last_updated": "2026-07-05",
   "interaction_policy": {
-    "primary_entry": "app_agent_auto_detection_first",
-    "description": "用户触发 Skill 后，第一步默认让 App Agent 检测 Steam 和《饥荒》安装，并按单机/联机路径自动进入停尸房或讣告截图；检测或自动化失败后才请求用户上传截图。",
-    "manual_questions_are_fallback": true,
+    "primary_entry": "material_source_guidance_first",
+    "description": "用户提出想在《饥荒》中活得更久但没有提供死亡记录或局内信息时，先引导用户选择材料来源：上传停尸房/讣告/死亡结算截图、文字描述死亡情况，或在环境允许时尝试自动获取死亡记录。App Agent 只在用户明确选择自动获取或明确要求打开游戏/进入停尸房/获取死亡记录时启动。",
+    "manual_questions_are_fallback": false,
     "fallback_when": [
-      "App Agent 不能自动操作，或产品环境没有授权自动操作。",
-      "未检测到 Steam。",
-      "Steam 中未检测到 Don't Starve 或 Don't Starve Together。",
+      "用户选择自动获取但 App Agent 不能操作，或产品环境没有授权自动操作。",
+      "用户选择自动获取但未检测到 Steam。",
+      "用户选择自动获取但 Steam 中未检测到 Don't Starve 或 Don't Starve Together。",
       "截图不是停尸房/死亡记录界面。",
       "OCR 无法可靠读出生存天数或死因。",
-      "用户没有截图且不想手动进入游戏截图。",
-      "用户主动要求不要自动操作，只想手动咨询。"
+      "用户不想上传截图，改用文字描述。",
+      "用户主动要求不要自动操作，只想文字咨询。"
     ]
   },
   "entry_cards": [
     {
-      "id": "auto_detection_status_card",
-      "title": "正在自动检测饥荒安装",
+      "id": "material_source_card",
+      "title": "先选择一种复盘材料",
       "selection_mode": "single",
       "priority": "primary",
       "options": [
         {
-          "id": "auto_detection",
-          "label": "自动检测",
-          "maps_to_stage": "app_agent_auto_detection_first",
-          "agent_bias": "默认走这条：先检测 Steam，再检测 219740/322330，再按单机/联机路径截图。不要先问截图。"
+          "id": "upload_death_record_screenshot",
+          "label": "上传死亡记录截图",
+          "maps_to_stage": "morgue_screenshot_analysis",
+          "agent_bias": "用户上传停尸房/讣告/死亡结算截图后，进入 OCR / 视觉识别，再做死亡复盘。"
         },
         {
-          "id": "upload_after_failure",
-          "label": "上传截图",
-          "maps_to_stage": "morgue_screenshot_upload_fallback",
-          "agent_bias": "仅在自动检测失败、非 Steam 版本或用户主动上传截图时使用。"
-        },
-        {
-          "id": "manual_fallback",
-          "label": "手动描述",
+          "id": "text_description_diagnosis",
+          "label": "文字描述死亡情况",
           "maps_to_stage": "manual_state_diagnosis",
-          "agent_bias": "仅在没有自动化入口且用户也没有截图时，用当前天数/死因/症状做两轮兜底诊断。"
+          "agent_bias": "用户直接描述第几天、怎么死、当时缺什么资源；最多两轮关键补问后进入根因链诊断。"
+        },
+        {
+          "id": "optional_auto_fetch",
+          "label": "尝试自动获取死亡记录",
+          "maps_to_stage": "app_agent_optional_death_record_fetch",
+          "agent_bias": "仅在用户明确选择时使用。先检测环境和 Steam 游戏安装，成功拿到截图后回到截图分析；任一环节失败则回到本取材料引导。"
         }
       ]
     },
@@ -101,24 +101,29 @@
   "dynamic_followup": {
     "max_questions": 3,
     "skip_when_user_already_provided_enough": true,
-    "primary_path": "用户触发后，先让 App Agent 检测 Steam 和游戏安装；检测失败后再请求用户上传停尸房/讣告截图；仍没有截图才问当前天数和死因。",
+    "primary_path": "用户触发后，先判断是否已经有截图或文字材料；没有材料时进入取材料引导。只有用户明确选择自动获取或明确要求打开游戏/进入停尸房/获取死亡记录时，才让 App Agent 检测环境并尝试获取死亡记录。",
     "do_not_ask_as_primary_inputs": ["当前血量多少", "当前饥饿多少", "当前 san 值多少"],
     "why": "三维是实时结果，变化太快；四季规划更需要当前季节和链状态。",
     "priority_order": [
       {
-        "id": "auto_detect_steam_games",
-        "question": "我先自动检测 Steam 里的《饥荒》单机版和联机版，能找到就直接打开对应停尸房/讣告截图。",
-        "short_reason": "默认入口，不需要用户先准备截图。"
+        "id": "material_source_guidance",
+        "question": "想帮你在《饥荒》里活得更久，我需要先了解你通常在哪一步翻车。你可以上传死亡记录截图、直接描述死亡情况，或让我在环境允许时尝试自动获取死亡记录。",
+        "short_reason": "默认入口，先获取可分析材料。"
       },
       {
         "id": "morgue_screenshot_upload",
-        "question": "我没检测到可自动操作的 Steam 版本。你可以上传停尸房/讣告截图，我继续读生存天数和死因。",
-        "short_reason": "自动检测失败后的第一兜底。"
+        "question": "如果你有停尸房/讣告/死亡结算截图，可以直接上传，我会读取生存天数和死因。",
+        "short_reason": "截图是最稳定的死亡复盘材料。"
       },
       {
         "id": "current_day",
-        "question": "如果没有截图，你大概活到第几天？",
-        "short_reason": "仅在自动检测失败且用户没有截图时询问。"
+        "question": "如果没有截图，你大概活到第几天？最后是冻死、饿死、黑暗、怪物、过热、火灾，还是别的情况？",
+        "short_reason": "文字问答诊断的第一轮关键材料。"
+      },
+      {
+        "id": "optional_auto_fetch",
+        "question": "如果你愿意，我也可以尝试自动获取死亡记录；这受电脑环境、游戏版本、分辨率和登录状态影响，失败后会回到截图上传或文字描述。",
+        "short_reason": "仅在用户选择后触发 App Agent。"
       },
       {
         "id": "current_season_or_symptom",
@@ -146,7 +151,7 @@
         "short_reason": "判断雨湿链、降温链和防火链是否闭合。"
       }
     ],
-    "example_compact_prompt": "我先自动检测 Steam 里的饥荒并尝试打开停尸房/讣告截图；如果没检测到，再请你上传截图；如果也没有截图，再问两轮问题兜底。"
+    "example_compact_prompt": "想帮你活得更久，我需要先知道你通常怎么翻车。你可以上传死亡记录截图、直接描述死亡情况，或选择让我尝试自动获取死亡记录。"
   },
   "fixed_output_structure": [
     {

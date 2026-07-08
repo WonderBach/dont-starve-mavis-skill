@@ -3,13 +3,15 @@
   "layer": "morgue_screenshot_interpretation",
   "last_updated": "2026-07-05",
   "source_ids": ["wiki_morgue", "wiki_death", "wiki_charlie", "wiki_shadow_creature", "wiki_overheating", "wiki_wetness", "wiki_spring", "wiki_summer"],
-  "purpose": "自动检测优先：用户触发 Skill 后，默认由 App Agent 检测 Steam 和《饥荒》安装，并按单机/联机路径进入停尸房/讣告截图。若自动化失败，再接收用户上传截图。Mavis 负责图片 OCR/视觉抽取，本 Skill 负责校验字段、解释死亡天数和死因、反推当季环境链或通用生存链。",
+  "purpose": "取材料引导优先：用户提出想在《饥荒》中活得更久但未提供死亡材料时，先引导其选择上传死亡记录截图、文字描述死亡情况，或在环境允许时尝试自动获取死亡记录。Mavis 负责图片 OCR/视觉抽取，本 Skill 负责校验字段、解释死亡天数和死因、反推当季环境链或通用生存链。",
   "important_principle": "停尸房的 Cause of Death 是最后一击或直接死亡来源，不一定是根因。Seasonal Agent 要把它转译成“哪条生存链先断”。",
   "primary_interaction_policy": {
-    "default_entry": "app_agent_auto_detection_first",
-    "auto_detection_first": "用户触发 Skill 后，第一步就是让 App Agent 检测 Steam 和游戏安装；不先问用户有没有截图，也不先把上传截图作为主入口。",
-    "screenshot_upload_fallback": "只有未检测到 Steam/游戏、非 Steam 版本、不在白名单、自动化路径失败、或产品环境不允许自动化时，才请求用户上传截图。",
-    "manual_fallback": "只有无法自动截图、用户也没有截图、OCR 置信度过低且无法确认时，才启用手动问答兜底。",
+    "default_entry": "material_source_guidance_first",
+    "material_source_guidance_first": "用户触发 Skill 后，如果当前缺少死亡记录、截图或局内信息，第一轮先让用户选择材料来源：上传截图、文字描述，或可选自动获取。",
+    "auto_fetch_trigger_condition": "只有用户明确选择“尝试自动获取死亡记录”，或明确表达“帮我打开游戏 / 帮我进停尸房 / 帮我获取死亡记录 / 自动帮我找记录”时，才启动 App Agent。",
+    "screenshot_analysis_path": "用户上传停尸房/讣告/死亡结算截图后，进入 OCR / 视觉识别，再做死亡复盘。",
+    "manual_diagnosis_path": "用户直接描述死亡情况时，最多两轮关键补问，基于天数、死因、缺资源和季节症状做诊断。",
+    "auto_fetch_path": "用户明确选择自动获取后，App Agent 检测 Steam 和游戏安装，尝试获取死亡记录截图；成功后回到截图分析，失败后回到取材料引导。",
     "max_followup_after_screenshot": 1,
     "allowed_followup_after_screenshot": [
       "OCR 读不清死因时，问用户确认 Cause of Death 原文。",
@@ -27,7 +29,7 @@
       {
         "id": "app_agent",
         "name_zh": "APP Agent",
-        "responsibility": "打开或切回《饥荒》，进入停尸房/死亡记录界面，并完成截图。",
+        "responsibility": "仅在用户明确选择自动获取时，检测环境并尝试进入停尸房/死亡记录界面完成截图；失败后回到取材料引导。",
         "output_contract": ["screenshot_image", "capture_context_optional"]
       },
       {
@@ -44,13 +46,14 @@
       }
     ],
     "recommended_sequence": [
-      "用户触发：帮我分析饥荒死因 / 打开饥荒看看我怎么死的 / 上传停尸房截图。",
-      "若没有截图且允许自动操作：APP Agent 先检测 Steam 和游戏安装，再打开游戏并导航到停尸房/讣告，截图。",
+      "用户触发：帮我看看饥荒怎么活得更久 / 帮我分析饥荒死因 / 上传停尸房截图。",
+      "若当前没有截图或死亡材料：先进入取材料引导，让用户选择上传截图、文字描述或可选自动获取。",
+      "若用户选择可选自动获取：APP Agent 检测 Steam 和游戏安装，尝试获取停尸房/讣告截图；失败则回到取材料引导。",
       "Mavis 对截图做 OCR，抽取 Days Lived、Deceased、Cause of Death、Mode。",
       "Skill 读取结构化 OCR 结果，先输出生存天数和直接死因，再输出根因链和修正建议。",
       "如果用户已选择介入方式，直接给对应攻略/代码；否则只问一次介入偏好。"
     ],
-    "implementation_note": "自动打开游戏和截图属于 APP Agent 的动作；图片理解属于 Mavis 本体能力；本 Skill 里应写清楚输入输出契约和推理规则，不需要承担底层截图操作。"
+    "implementation_note": "可选自动获取和截图属于 APP Agent 的动作；图片理解属于 Mavis 本体能力；本 Skill 里应写清楚输入输出契约和推理规则，不需要承担底层截图操作。"
   },
   "input_contract": {
     "preferred_input": {
