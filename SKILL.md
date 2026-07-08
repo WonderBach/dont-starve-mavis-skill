@@ -1,3 +1,9 @@
+---
+name: dont-starve-review
+author: mimu
+description: 帮《饥荒》玩家复盘死亡与生存。当用户问“怎么活得更久 / 为什么总是死”，上传停尸房或讣告截图，或想分析死因、生存天数、下一局怎么改时启用；读图或用选择题判断直接死因与根因链，给出下一局最低修正方案，并可选提供物资代码与属性/开挂代码援助。
+---
+
 # Mavis Skill：饥荒死亡复盘 / 生存复盘
 
 ## 目标
@@ -522,6 +528,8 @@ c_give("xxx", 10)
 调用关系：`death_causes.json` 是死因判定入口，`seasonal_survival.json` 是四季上下文，`rules.json` 只在冬季/首冬相关时下钻。
 
 ## 来源
+
+作者：mimu
 
 Steam app id 以官方 Steam 商店页面为准：
 

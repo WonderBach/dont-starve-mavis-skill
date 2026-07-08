@@ -345,9 +345,9 @@
       },
       {
         "id": "intervention_level",
-        "text": "你想要纯攻略、补物资代码，还是直接调属性？",
-        "ask_when": "not already answered by card two",
-        "why": "决定是否展示控制台援助。"
+        "text": "（默认不前置询问）首轮默认按 guide_only + item_codes 直接给攻略和对应物资补救代码；仅当用户明确追问难度太高/想改数值/想要更强代码时，才升级到 stat_codes。",
+        "ask_when": "never_ask_upfront",
+        "why": "介入方式不再作为前置提问，避免打断“点开即跑”；更强代码等用户明确追问再给。"
       }
     ]
   },

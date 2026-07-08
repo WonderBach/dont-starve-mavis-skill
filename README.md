@@ -1,6 +1,5 @@
-# 《饥荒》新手四季生存规划数据库
+# 饥荒生存复盘助手
 
-文档状态：草稿，待导师确认  
 目标：支撑 PC 应用宝 / Marvis 的《饥荒》新手生存规划 Agent MVP  
 主口径：Don't Starve 单机 Reign of Giants / Giant Edition 默认世界，一年四季基础生存；首冬作为冬季重点子模块保留
 

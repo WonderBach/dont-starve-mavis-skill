@@ -104,28 +104,6 @@
         "then": "取交集确定 1 条主断链 + 1-2 条次断链，再查 death_causes.json / seasonal_survival.json，套用 fixed_output_structure 输出：当前最大风险 → 核心清单 → 紧迫度 → 最低保命方案 → 可选援助。",
         "conflict": "多选冲突或都选说不清时，以季节卡为主锚点，最多再补问一句（最近一次大概怎么死的 / 第几天），不要展开长问卷。"
       }
-    },
-    {
-      "id": "intervention_card",
-      "title": "你希望 AI 帮到什么程度？",
-      "selection_mode": "single",
-      "options": [
-        {
-          "id": "guide_only",
-          "label": "只给攻略，自己来跑图收集",
-          "output_policy": "不主动展示控制台代码，只给路线、清单和优先级。"
-        },
-        {
-          "id": "item_codes",
-          "label": "给物资代码，快速补齐资源，探索还是自己探索",
-          "output_policy": "可展示 c_give/c_spawn 物资包；结构用 c_spawn，背包物品用 c_give。"
-        },
-        {
-          "id": "stat_codes",
-          "label": "修改人物属性代码，开挂躺平",
-          "output_policy": "可展示 c_sethealth/c_sethunger/c_setsanity、暂停饥饿或 god mode；仍保留最小物资建议。"
-        }
-      ]
     }
   ],
   "dynamic_followup": {
